@@ -1,7 +1,8 @@
 // Bundles the ES modules of src/ into one self-contained HTML page.
 // Each module becomes a scoped closure; imports become destructurings.
 
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { dirname, join, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +10,8 @@ const root = dirname(fileURLToPath(import.meta.url));
 const src = join(root, "src");
 const ENTRY = "app.js";
 const OUTPUT = join(root, "dist", "desmosomen-zugkraft.html");
+const STANDALONE_DIR = join(root, "dist", "ilias");
+const STANDALONE_ZIP = join(root, "dist", "desmosomen-zugkraft-ilias.zip");
 
 const IMPORT = /^import\s+(.+?)\s+from\s+"\.\/(.+?)";\s*$/gm;
 const EXPORT = /^export\s+(?:class|function|const)\s+(\w+)/gm;
@@ -48,3 +51,19 @@ const page = readFileSync(join(src, "index.html"), "utf8").replace("/* APP_SCRIP
 mkdirSync(dirname(OUTPUT), { recursive: true });
 writeFileSync(OUTPUT, page);
 console.log(`wrote ${OUTPUT} (${(page.length / 1024).toFixed(1)} kB)`);
+
+// Standalone variant (e.g. an ILIAS HTML learning module): the Artifact host
+// adds the document skeleton itself, a plain web server does not.
+const standalone = `<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+${page}
+</html>
+`;
+mkdirSync(STANDALONE_DIR, { recursive: true });
+writeFileSync(join(STANDALONE_DIR, "index.html"), standalone);
+rmSync(STANDALONE_ZIP, { force: true });
+execFileSync("zip", ["-q", "-j", STANDALONE_ZIP, join(STANDALONE_DIR, "index.html")]);
+console.log(`wrote ${STANDALONE_ZIP}`);

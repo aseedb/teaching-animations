@@ -20,3 +20,7 @@ npm run build     # bundles src/ into dist/desmosomen-zugkraft.html
 ```
 
 The build output is a single self-contained HTML page (fonts from Google Fonts, everything else inline).
+
+## ILIAS
+
+`npm run build` also writes a standalone page (`dist/ilias/index.html`, with doctype, UTF-8 charset and viewport) and `dist/desmosomen-zugkraft-ilias.zip` for an ILIAS HTML learning module (start file: `index.html`).
