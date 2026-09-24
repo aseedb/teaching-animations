@@ -38,4 +38,18 @@ export class Nodes {
     this.#fxs[i] += fx;
     this.#fys[i] += fy;
   }
+
+  count() {
+    return this.#xs.length;
+  }
+
+  clearForces() {
+    this.#fxs.fill(0);
+    this.#fys.fill(0);
+  }
+
+  move(i, dx, dy) {
+    this.#xs[i] += dx;
+    this.#ys[i] += dy;
+  }
 }
