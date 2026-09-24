@@ -6,15 +6,29 @@ export class Cell {
   #restArea;
   #bulkModulus;
   #ruptured = false;
+  #nucleusHolders;
 
   constructor(ring, restArea, bulkModulus) {
     this.#ring = ring;
     this.#restArea = restArea;
     this.#bulkModulus = bulkModulus;
+    this.#nucleusHolders = ring;
   }
 
   static of(ring, restArea, bulkModulus) {
     return new Cell(ring, restArea, bulkModulus);
+  }
+
+  holdNucleusIn(cage) {
+    this.#nucleusHolders = cage;
+  }
+
+  drawOn(nodes, painter) {
+    painter.cytoplasm(this.#ring.map((i) => [nodes.x(i), nodes.y(i)]), this.#ruptured);
+    const holders = this.#nucleusHolders;
+    const x = holders.reduce((sum, i) => sum + nodes.x(i), 0) / holders.length;
+    const y = holders.reduce((sum, i) => sum + nodes.y(i), 0) / holders.length;
+    painter.nucleus(x, y, this.#ruptured);
   }
 
   rupture() {

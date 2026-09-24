@@ -34,8 +34,8 @@ describe("SpringSpecification", () => {
   });
 
   test("ShouldStayIntactWhenStrainEqualsBreakStrain", () => {
-    // GIVEN
-    const breakStrain = 0.1 + Math.random() * 0.5;
+    // GIVEN (a dyadic strain, so the boundary is represented exactly)
+    const breakStrain = (1 + Math.floor(Math.random() * 7)) / 16;
     const { nodes, a, b } = horizontalPair(1, breakStrain);
     const spring = Spring.between(a, b, 1, LinearLaw.of(anyPositive()), breakStrain, anyKind());
     // WHEN

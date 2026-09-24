@@ -27,7 +27,7 @@ export class Spring {
     const dx = nodes.x(this.#b) - nodes.x(this.#a);
     const dy = nodes.y(this.#b) - nodes.y(this.#a);
     const length = Math.hypot(dx, dy);
-    const strain = (length - this.#restLength) / this.#restLength;
+    const strain = this.#strainAt(length);
     if (strain > this.#breakStrain) {
       this.#broken = true;
       return;
@@ -38,6 +38,16 @@ export class Spring {
   #pull(nodes, tensionPerLength, dx, dy) {
     nodes.addForce(this.#a, tensionPerLength * dx, tensionPerLength * dy);
     nodes.addForce(this.#b, -tensionPerLength * dx, -tensionPerLength * dy);
+  }
+
+  #strainAt(length) {
+    return (length - this.#restLength) / this.#restLength;
+  }
+
+  drawOn(nodes, painter) {
+    if (this.#broken) return;
+    const [x1, y1, x2, y2] = [nodes.x(this.#a), nodes.y(this.#a), nodes.x(this.#b), nodes.y(this.#b)];
+    painter.link(this.#kind, x1, y1, x2, y2, this.#strainAt(Math.hypot(x2 - x1, y2 - y1)));
   }
 
   isBroken() {

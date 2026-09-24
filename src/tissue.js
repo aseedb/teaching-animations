@@ -15,6 +15,8 @@ const DESMOSOME_LAW = LinearLaw.of(C.DESMOSOME_STIFFNESS);
 const FILAMENT_LAW = StiffeningLaw.of(C.FILAMENT_STIFFNESS, C.FILAMENT_STIFFENING, C.FILAMENT_COMPRESSION);
 const SEGMENT = C.CELL_SIZE / C.SEGMENTS_PER_SIDE;
 const PITCH = C.CELL_SIZE + C.CELL_GAP;
+const DRAWING_ORDER = ["filament", "membrane", "desmosome"];
+const BAR_OVERHANG = 20;
 
 export class Tissue {
   #nodes = Nodes.create();
@@ -22,6 +24,7 @@ export class Tissue {
   #cells = [];
   #membraneOwners = new Map();
   #fixed = new Set();
+  #clamp = [];
   #grip = [];
   #gripTravel = 0;
   #width;
@@ -110,6 +113,7 @@ export class Tissue {
     const plaque = cellEntry.ring[sideNode("left", off)];
     const anchor = this.#nodes.add(cellEntry.x0 - C.CELL_GAP, cellEntry.y0 + off);
     this.#fixed.add(anchor);
+    this.#clamp.push(anchor);
     cellEntry.plaques.push(plaque);
     this.#addDesmosome(anchor, plaque);
   }
@@ -123,8 +127,9 @@ export class Tissue {
     this.#addDesmosome(plaque, handle);
   }
 
-  #buildFilamentCage({ ring, x0, y0, plaques }) {
+  #buildFilamentCage({ cell, x0, y0, plaques }) {
     const cage = cageOutline(x0 + C.CELL_SIZE / 2, y0 + C.CELL_SIZE / 2).map(([x, y]) => this.#nodes.add(x, y));
+    cell.holdNucleusIn(cage);
     cage.forEach((a, k) => this.#addFilament(a, cage[(k + 1) % cage.length]));
     plaques.forEach((plaque) => this.#tetherToCage(plaque, cage));
   }
@@ -174,6 +179,24 @@ export class Tissue {
     this.#membraneOwners.forEach((cell, spring) => {
       if (spring.isBroken()) cell.rupture();
     });
+  }
+
+  // ---- drawing ------------------------------------------------------------
+
+  drawOn(painter) {
+    this.#cells.forEach((cell) => cell.drawOn(this.#nodes, painter));
+    DRAWING_ORDER.forEach((kind) => this.#drawLinksOfKind(kind, painter));
+    painter.clamp(...this.#barSpan(this.#clamp));
+    painter.grip(...this.#barSpan(this.#grip));
+  }
+
+  #drawLinksOfKind(kind, painter) {
+    this.#springs.filter((s) => s.isKind(kind)).forEach((s) => s.drawOn(this.#nodes, painter));
+  }
+
+  #barSpan(bar) {
+    const ys = bar.map((i) => this.#nodes.y(i));
+    return [this.#nodes.x(bar[0]), Math.min(...ys) - BAR_OVERHANG, Math.max(...ys) + BAR_OVERHANG];
   }
 
   // ---- queries ------------------------------------------------------------
