@@ -3,6 +3,7 @@
 import * as C from "./constants.js";
 import { Tissue } from "./tissue.js";
 import { ForceRamp } from "./forceRamp.js";
+import { filamentPath } from "./filamentShape.js";
 
 const SEED = 7;
 const ROWS = 3;
@@ -10,7 +11,7 @@ const COLS = 4;
 const RAMP_SECONDS = 24;
 const ITERATIONS_PER_FRAME = 60;
 const WORLD = { x: -40, y: -42, width: 540, height: 300 };
-const FILAMENT_STRESS_SCALE = 0.35;
+const FILAMENT_STRESS_SCALE = 0.08;
 const PLAQUE_HALF_LENGTH = 4.5;
 const NUCLEUS_RADIUS = 8.5;
 const TEAR_STUB = 3.5;
@@ -82,8 +83,18 @@ class CanvasPainter {
   }
 
   #filament(x1, y1, x2, y2, strain) {
-    const t = this.showStress ? clamp01(strain / FILAMENT_STRESS_SCALE) : 0;
-    this.#stroke(x1, y1, x2, y2, mix(this.palette.keratin, this.palette.stress, t), 1.3 + 1.2 * clamp01(strain / FILAMENT_STRESS_SCALE));
+    const load = clamp01(strain / FILAMENT_STRESS_SCALE);
+    const color = mix(this.palette.keratin, this.palette.stress, this.showStress ? load : 0);
+    this.#polyline(filamentPath(x1, y1, x2, y2, strain), color, 1.3 + 1.2 * load);
+  }
+
+  #polyline(points, color, width) {
+    const ctx = this.#ctx;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    points.forEach(([x, y], k) => (k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    ctx.stroke();
   }
 
   #desmosome(x1, y1, x2, y2) {
