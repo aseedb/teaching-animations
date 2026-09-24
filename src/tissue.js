@@ -151,8 +151,11 @@ export class Tissue {
     nearestTwo(this.#nodes, plaque, cage).forEach((node) => this.#addFilament(plaque, node));
   }
 
+  // Intermediate filaments are flexible: laid down wavy, with a contour
+  // longer than the span between their anchors, they carry no load until
+  // the tissue has stretched them straight.
   #addFilament(a, b) {
-    const rest = distance(this.#nodes, a, b);
+    const rest = distance(this.#nodes, a, b) * (1 + C.FILAMENT_SLACK);
     this.#springs.push(Spring.between(a, b, rest, FILAMENT_LAW, C.FILAMENT_BREAK_STRAIN, "filament"));
   }
 

@@ -28,7 +28,7 @@ function rampSlowly(withFilaments, seed) {
 
 function elongationUnder(withFilaments, force) {
   const tissue = Tissue.build({ rows: 3, cols: 4, withFilaments, seed: anySeed() });
-  tissue.relaxUnder(force, 20000);
+  tissue.relaxUnder(force, 40000);
   return tissue.census().elongation;
 }
 
@@ -66,13 +66,25 @@ describe("TensileLoadScenarioSpecification", () => {
     assert.equal(withoutFilaments.census.broken.desmosome, 0);
   });
 
-  test("ShouldStretchFarMoreWithoutIntermediateFilamentsUnderTheSameSubcriticalForce", () => {
+  test("ShouldStretchFarMoreWithoutIntermediateFilamentsAtHalfTheMaximalForce", () => {
     // GIVEN
-    const force = MAX_FORCE / 3;
+    const force = MAX_FORCE / 2;
     // WHEN
     const soft = elongationUnder(false, force);
     const reinforced = elongationUnder(true, force);
     // THEN
-    assert.ok(soft > 2 * reinforced, `${soft} vs ${reinforced}`);
+    assert.ok(soft > 1.8 * reinforced, `${soft} vs ${reinforced}`);
+  });
+
+  test("ShouldStiffenSharplyOnceItsSlackFilamentsAreStraightened", () => {
+    // GIVEN
+    const tissue = Tissue.build({ rows: 3, cols: 4, withFilaments: true, seed: anySeed() });
+    // WHEN
+    tissue.relaxUnder(MAX_FORCE / 5, 20000);
+    const whileStraightening = tissue.census().elongation;
+    tissue.relaxUnder((2 * MAX_FORCE) / 5, 20000);
+    const onceTaut = tissue.census().elongation - whileStraightening;
+    // THEN (same force increment, far smaller stretch)
+    assert.ok(whileStraightening > 3 * onceTaut, `${whileStraightening} vs ${onceTaut}`);
   });
 });

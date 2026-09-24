@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { Tissue } from "../src/tissue.js";
-import { PERINUCLEAR_NODES, SEGMENTS_PER_SIDE } from "../src/constants.js";
+import { PERINUCLEAR_NODES, SEGMENTS_PER_SIDE, FILAMENT_SLACK } from "../src/constants.js";
 
 const anyCount = (max = 4) => 1 + Math.floor(Math.random() * max);
 const anySeed = () => Math.floor(Math.random() * 1e9);
@@ -65,6 +65,18 @@ describe("TissueSpecification", () => {
     const tissue = Tissue.build({ rows, cols, withFilaments: Math.random() < 0.5, seed: anySeed() });
     // THEN
     assert.equal(tissue.census().intact.cytoplasm, rows * cols * 4 * SEGMENTS_PER_SIDE);
+  });
+
+  test("ShouldLayEveryIntermediateFilamentSlackAtRest", () => {
+    // GIVEN
+    const tissue = Tissue.build({ rows: anyCount(), cols: anyCount(), withFilaments: true, seed: anySeed() });
+    const strains = [];
+    const painter = { link: (kind, x1, y1, x2, y2, strain) => kind === "filament" && strains.push(strain), tear() {}, cytoplasm() {}, nucleus() {}, clamp() {}, grip() {} };
+    // WHEN
+    tissue.drawOn(painter);
+    // THEN (anchor distance = contour length / (1 + slack))
+    const expected = 1 / (1 + FILAMENT_SLACK) - 1;
+    assert.ok(strains.length > 0 && strains.every((s) => Math.abs(s - expected) < 1e-9));
   });
 
   test("ShouldStartWithEveryCellIntact", () => {
