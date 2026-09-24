@@ -1,7 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { Tissue } from "../src/tissue.js";
-import { PERINUCLEAR_NODES } from "../src/constants.js";
+import { PERINUCLEAR_NODES, SEGMENTS_PER_SIDE } from "../src/constants.js";
 
 const anyCount = (max = 4) => 1 + Math.floor(Math.random() * max);
 const anySeed = () => Math.floor(Math.random() * 1e9);
@@ -15,6 +15,13 @@ function desmosomesExpected(rows, cols) {
 function plaquesExpected(rows, cols) {
   const betweenCells = 2 * (rows * (cols - 1) + (rows - 1) * cols);
   return 2 * betweenCells + 2 * 2 * rows;
+}
+
+// Every cell has plaques on its left and right sides (neighbour, clamp or
+// grip); only cells with neighbours above and below have plaques on both.
+function transcellularBundlesExpected(rows, cols) {
+  const offsets = 2;
+  return offsets * (rows * cols + Math.max(0, rows - 2) * cols);
 }
 
 describe("TissueSpecification", () => {
@@ -37,7 +44,7 @@ describe("TissueSpecification", () => {
     assert.equal(tissue.census().intact.filament, 0);
   });
 
-  test("ShouldTieEveryPlaqueToThePerinuclearFilamentCageWhenBuiltWithFilaments", () => {
+  test("ShouldTieEveryPlaqueToThePerinuclearCageAndToTheFacingPlaqueWhenBuiltWithFilaments", () => {
     // GIVEN
     const rows = anyCount();
     const cols = anyCount();
@@ -46,7 +53,18 @@ describe("TissueSpecification", () => {
     // THEN
     const cage = rows * cols * PERINUCLEAR_NODES;
     const tethers = 2 * plaquesExpected(rows, cols);
-    assert.equal(tissue.census().intact.filament, cage + tethers);
+    const bundles = transcellularBundlesExpected(rows, cols);
+    assert.equal(tissue.census().intact.filament, cage + tethers + bundles);
+  });
+
+  test("ShouldBraceEveryMembraneNodeToTheCellCentreWithCytoplasmicElasticity", () => {
+    // GIVEN
+    const rows = anyCount();
+    const cols = anyCount();
+    // WHEN
+    const tissue = Tissue.build({ rows, cols, withFilaments: Math.random() < 0.5, seed: anySeed() });
+    // THEN
+    assert.equal(tissue.census().intact.cytoplasm, rows * cols * 4 * SEGMENTS_PER_SIDE);
   });
 
   test("ShouldStartWithEveryCellIntact", () => {

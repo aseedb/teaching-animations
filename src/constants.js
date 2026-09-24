@@ -8,8 +8,8 @@ export const PERINUCLEAR_RADIUS = 11;
 
 // Material (tension in force units per unit strain).
 export const MEMBRANE_STIFFNESS = 30;
-export const MEMBRANE_BREAK_STRAIN = 0.6;
-export const MEMBRANE_BREAK_SPREAD = 0.1;
+export const MEMBRANE_BREAK_STRAIN = 0.15;
+export const MEMBRANE_BREAK_SPREAD = 0.2;
 export const DESMOSOME_STIFFNESS = 120;
 export const DESMOSOME_BREAK_STRAIN = 8;
 export const FILAMENT_STIFFNESS = 60;
@@ -17,6 +17,7 @@ export const FILAMENT_STIFFENING = 30;
 export const FILAMENT_COMPRESSION = 0.05;
 export const FILAMENT_BREAK_STRAIN = 3;
 export const BULK_MODULUS = 3;
+export const CYTOPLASM_STIFFNESS = 40;
 
 // Dynamics.
 export const TIME_STEP = 0.02;

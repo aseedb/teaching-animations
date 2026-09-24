@@ -12,6 +12,7 @@ import { SeededRandom } from "./seededRandom.js";
 
 const MEMBRANE_LAW = LinearLaw.of(C.MEMBRANE_STIFFNESS);
 const DESMOSOME_LAW = LinearLaw.of(C.DESMOSOME_STIFFNESS);
+const CYTOPLASM_LAW = LinearLaw.of(C.CYTOPLASM_STIFFNESS);
 const FILAMENT_LAW = StiffeningLaw.of(C.FILAMENT_STIFFNESS, C.FILAMENT_STIFFENING, C.FILAMENT_COMPRESSION);
 const SEGMENT = C.CELL_SIZE / C.SEGMENTS_PER_SIDE;
 const PITCH = C.CELL_SIZE + C.CELL_GAP;
@@ -61,6 +62,7 @@ export class Tissue {
     const ring = ringOutline(x0, y0).map(([x, y]) => this.#nodes.add(x, y));
     const cell = Cell.of(ring, C.CELL_SIZE * C.CELL_SIZE, C.BULK_MODULUS);
     ring.forEach((a, k) => this.#addMembrane(a, ring[(k + 1) % ring.length], cell));
+    this.#braceToCentre(ring, cell, x0 + C.CELL_SIZE / 2, y0 + C.CELL_SIZE / 2);
     this.#cells.push(cell);
     return { cell, ring, x0, y0, plaques: [] };
   }
@@ -70,6 +72,18 @@ export class Tissue {
     const spring = Spring.between(a, b, SEGMENT, MEMBRANE_LAW, breakStrain, "membrane");
     this.#springs.push(spring);
     this.#membraneOwners.set(spring, cell);
+  }
+
+  // Cytoplasm and actin give the cell some shape elasticity of its own.
+  #braceToCentre(ring, cell, cx, cy) {
+    const centre = this.#nodes.add(cx, cy);
+    cell.holdNucleusIn([centre]);
+    ring.forEach((node) => this.#addSpoke(centre, node));
+  }
+
+  #addSpoke(centre, node) {
+    const rest = distance(this.#nodes, centre, node);
+    this.#springs.push(Spring.between(centre, node, rest, CYTOPLASM_LAW, Infinity, "cytoplasm"));
   }
 
   #linkNeighbours(grid, rows, cols) {
@@ -84,16 +98,12 @@ export class Tissue {
     const here = grid[r][c];
     const right = grid[r][c + 1];
     const below = grid[r + 1]?.[c];
-    if (right) C.PLAQUE_OFFSETS.forEach((off) => this.#joinCells(here, sideNode("right", off), right, sideNode("left", off)));
-    if (below) C.PLAQUE_OFFSETS.forEach((off) => this.#joinCells(here, sideNode("bottom", off), below, sideNode("top", off)));
+    if (right) C.PLAQUE_OFFSETS.forEach((off) => this.#joinCells(here, "right", right, "left", off));
+    if (below) C.PLAQUE_OFFSETS.forEach((off) => this.#joinCells(here, "bottom", below, "top", off));
   }
 
-  #joinCells(first, firstPosition, second, secondPosition) {
-    const a = first.ring[firstPosition];
-    const b = second.ring[secondPosition];
-    first.plaques.push(a);
-    second.plaques.push(b);
-    this.#addDesmosome(a, b);
+  #joinCells(first, firstSide, second, secondSide, off) {
+    this.#addDesmosome(placePlaque(first, firstSide, off), placePlaque(second, secondSide, off));
   }
 
   #addDesmosome(a, b) {
@@ -110,28 +120,31 @@ export class Tissue {
   }
 
   #attachToClamp(cellEntry, off) {
-    const plaque = cellEntry.ring[sideNode("left", off)];
     const anchor = this.#nodes.add(cellEntry.x0 - C.CELL_GAP, cellEntry.y0 + off);
     this.#fixed.add(anchor);
     this.#clamp.push(anchor);
-    cellEntry.plaques.push(plaque);
-    this.#addDesmosome(anchor, plaque);
+    this.#addDesmosome(anchor, placePlaque(cellEntry, "left", off));
   }
 
   #attachToGrip(cellEntry, off) {
-    const plaque = cellEntry.ring[sideNode("right", off)];
     const handle = this.#nodes.add(cellEntry.x0 + C.CELL_SIZE + C.CELL_GAP, cellEntry.y0 + off);
     this.#fixed.add(handle);
     this.#grip.push(handle);
-    cellEntry.plaques.push(plaque);
-    this.#addDesmosome(plaque, handle);
+    this.#addDesmosome(placePlaque(cellEntry, "right", off), handle);
   }
 
   #buildFilamentCage({ cell, x0, y0, plaques }) {
     const cage = cageOutline(x0 + C.CELL_SIZE / 2, y0 + C.CELL_SIZE / 2).map(([x, y]) => this.#nodes.add(x, y));
     cell.holdNucleusIn(cage);
     cage.forEach((a, k) => this.#addFilament(a, cage[(k + 1) % cage.length]));
-    plaques.forEach((plaque) => this.#tetherToCage(plaque, cage));
+    plaques.forEach(({ node }) => this.#tetherToCage(node, cage));
+    plaques.forEach((plaque) => this.#bundleToFacingPlaque(plaque, plaques));
+  }
+
+  // Keratin bundles also run straight across the cell, desmosome to desmosome.
+  #bundleToFacingPlaque({ side, off, node }, plaques) {
+    const facing = plaques.find((p) => p.side === FACING[side] && p.off === off);
+    if (facing) this.#addFilament(node, facing.node);
   }
 
   #tetherToCage(plaque, cage) {
@@ -211,7 +224,7 @@ export class Tissue {
   }
 
   #countSprings(predicate) {
-    const counts = { membrane: 0, desmosome: 0, filament: 0 };
+    const counts = { membrane: 0, desmosome: 0, filament: 0, cytoplasm: 0 };
     const kinds = Object.keys(counts);
     this.#springs.filter(predicate).forEach((s) => counts[kinds.find((k) => s.isKind(k))]++);
     return counts;
@@ -247,6 +260,14 @@ function sideNode(side, offset) {
   const reversed = side === "bottom" || side === "left";
   const along = reversed ? C.CELL_SIZE - offset : offset;
   return start + along / SEGMENT;
+}
+
+const FACING = { left: "right", top: "bottom" };
+
+function placePlaque(cellEntry, side, off) {
+  const node = cellEntry.ring[sideNode(side, off)];
+  cellEntry.plaques.push({ side, off, node });
+  return node;
 }
 
 function cageOutline(cx, cy) {
