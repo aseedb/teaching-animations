@@ -17,6 +17,10 @@ class RecordingPainter {
   nuclei = [];
   clamps = [];
   grips = [];
+  tears = [];
+  tear(kind, x1, y1, x2, y2) {
+    this.tears.push({ kind, x1, y1, x2, y2 });
+  }
   link(kind, x1, y1, x2, y2, strain) {
     this.links.push({ kind, x1, y1, x2, y2, strain });
   }
@@ -56,18 +60,21 @@ describe("SpringDrawingSpecification", () => {
     assertClose(painter.links[0].strain, strain);
   });
 
-  test("ShouldVanishFromTheDrawingOnceBroken", () => {
+  test("ShouldBeDrawnAsATearBetweenItsEndsOnceBroken", () => {
     // GIVEN
+    const kind = anyKind();
     const nodes = Nodes.create();
     nodes.add(0, 0);
-    nodes.add(3, 0);
-    const spring = Spring.between(0, 1, 1, LinearLaw.of(1), 0.5, anyKind());
+    const far = 3 + anyPositive(10);
+    nodes.add(far, 0);
+    const spring = Spring.between(0, 1, 1, LinearLaw.of(1), 0.5, kind);
     spring.applyTo(nodes);
     const painter = new RecordingPainter();
     // WHEN
     spring.drawOn(nodes, painter);
     // THEN
     assert.equal(painter.links.length, 0);
+    assert.deepEqual(painter.tears, [{ kind, x1: 0, y1: 0, x2: far, y2: 0 }]);
   });
 });
 

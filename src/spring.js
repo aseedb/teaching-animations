@@ -45,9 +45,9 @@ export class Spring {
   }
 
   drawOn(nodes, painter) {
-    if (this.#broken) return;
     const [x1, y1, x2, y2] = [nodes.x(this.#a), nodes.y(this.#a), nodes.x(this.#b), nodes.y(this.#b)];
-    painter.link(this.#kind, x1, y1, x2, y2, this.#strainAt(Math.hypot(x2 - x1, y2 - y1)));
+    if (this.#broken) painter.tear(this.#kind, x1, y1, x2, y2);
+    else painter.link(this.#kind, x1, y1, x2, y2, this.#strainAt(Math.hypot(x2 - x1, y2 - y1)));
   }
 
   isBroken() {

@@ -13,6 +13,7 @@ const WORLD = { x: -40, y: -42, width: 540, height: 300 };
 const FILAMENT_STRESS_SCALE = 0.35;
 const PLAQUE_HALF_LENGTH = 4.5;
 const NUCLEUS_RADIUS = 8.5;
+const TEAR_STUB = 3.5;
 
 // ---- colours ------------------------------------------------------------
 
@@ -122,7 +123,16 @@ class CanvasPainter {
     ctx.arc(x, y, NUCLEUS_RADIUS, 0, 2 * Math.PI);
     ctx.fill();
     ctx.globalAlpha = 1;
-    if (ruptured && this.showLabels) this.#label("Zytolyse", x, y + NUCLEUS_RADIUS + 13, this.palette.torn, "center");
+  }
+
+  // The torn membrane edges: short stubs curling back from each broken end.
+  tear(kind, x1, y1, x2, y2) {
+    if (kind !== "membrane") return;
+    const length = Math.hypot(x2 - x1, y2 - y1) || 1;
+    const ux = ((x2 - x1) / length) * TEAR_STUB;
+    const uy = ((y2 - y1) / length) * TEAR_STUB;
+    this.#stroke(x1, y1, x1 + ux, y1 + uy, this.palette.torn, 2.6);
+    this.#stroke(x2, y2, x2 - ux, y2 - uy, this.palette.torn, 2.6);
   }
 
   clamp(x, yTop, yBottom) {
