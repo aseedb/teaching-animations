@@ -86,7 +86,7 @@ export class Lamellipodium {
     this.#capListeners.push(listener);
   }
 
-  // the listener receives the position of the cut
+  // the listener receives the position of the cut, the barbed piece and the rear piece
   onSever(listener) {
     this.#severListeners.push(listener);
   }
@@ -200,7 +200,7 @@ export class Lamellipodium {
       if (states[i] === "ADP" && states[i - 1] === "ADP" && this.#random.chance(this.#rates.severingWithCofilin)) {
         const cut = f.subunitPosition(i);
         const rear = f.severBefore(i);
-        this.#severListeners.forEach((l) => l(cut));
+        this.#severListeners.forEach((l) => l(cut, f, rear));
         this.#wrap(rear);
         pieces.push(rear);
         return;

@@ -120,6 +120,17 @@ describe("LamellipodiumSpecification", () => {
     assert.ok(cuts.length > 0 && cuts.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)));
   });
 
+  test("ShouldReportBothPiecesOfASeveredFilamentMeetingAtTheCut", () => {
+    // GIVEN
+    const cell = run(Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed())), 300);
+    const gaps = [];
+    cell.onSever((at, front, rear) => gaps.push(Math.hypot(rear.barbedTip().x - front.pointedEnd().x, rear.barbedTip().y - front.pointedEnd().y)));
+    // WHEN
+    run(cell, 600);
+    // THEN
+    assert.ok(gaps.length > 0 && gaps.every((g) => g < 1e-9), `${gaps.length} cuts`);
+  });
+
   test("ShouldReportNoSeveringWithoutCofilin", () => {
     // GIVEN
     const cell = Lamellipodium.create({ ...ALL_ON, cofilin: false }, SeededRandom.of(anySeed()));
