@@ -47,6 +47,18 @@ describe("TourSpecification", () => {
     assert.equal(tour.isWaiting(), false);
   });
 
+  test("ShouldAdvanceInProportionToTheFramesATickCovers", () => {
+    // GIVEN
+    const sim = counterSim();
+    const steps = [{ title: "timed", text: "", setup: (s) => s.reset(0), speed: 1, until: () => false, highlights: () => [] }];
+    const tour = Tour.start(steps, sim);
+    const frames = anyInt(2, 9);
+    // WHEN
+    tour.tick(frames);
+    // THEN
+    assert.equal(sim.value, frames);
+  });
+
   test("ShouldAdvanceSlowerThanOneStepPerTickWhenTheSpeedIsFractional", () => {
     // GIVEN
     const sim = counterSim();
