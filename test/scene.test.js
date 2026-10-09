@@ -82,6 +82,17 @@ describe("ActinSceneSpecification", () => {
     assert.ok(Number.isFinite(scene.severSinceMark().at.x));
   });
 
+  test("ShouldIgnoreEventsDuringTheLeadIn", () => {
+    // GIVEN
+    const scene = Scene.empty();
+    scene.reset(anySeed(), 300, ALL_ON);
+    scene.leadIn(40);
+    // WHEN
+    scene.runUntil((s) => s.capSinceMark() !== null, 3000);
+    // THEN
+    assert.ok(scene.capSinceMark().step - 300 >= 40);
+  });
+
   test("ShouldCountTheAgeOfARememberedEvent", () => {
     // GIVEN
     const scene = Scene.empty();

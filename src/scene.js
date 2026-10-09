@@ -16,6 +16,7 @@ export class Scene {
   #branch = null;
   #cap = null;
   #sever = null;
+  #eventFloor = 0; // events earlier than this many steps after the mark are not remembered
 
   static empty() {
     const scene = new Scene();
@@ -28,8 +29,8 @@ export class Scene {
     this.#steps = 0;
     this.#births = new Map();
     this.#cell.onBranch((f) => this.#onBranch(f));
-    this.#cell.onCap((f) => { if (!this.#cap) this.#cap = { filament: f, step: this.#steps }; });
-    this.#cell.onSever((at) => { if (!this.#sever) this.#sever = { at, step: this.#steps }; });
+    this.#cell.onCap((f) => { if (!this.#cap && this.#counts()) this.#cap = { filament: f, step: this.#steps }; });
+    this.#cell.onSever((at) => { if (!this.#sever && this.#counts()) this.#sever = { at, step: this.#steps }; });
     this.advance(warmUp);
     this.mark();
   }
@@ -48,6 +49,12 @@ export class Scene {
     this.#branch = null;
     this.#cap = null;
     this.#sever = null;
+    this.#eventFloor = 0;
+  }
+
+  // the events of interest are the first ones after a lead-in of n steps
+  leadIn(n) {
+    this.#eventFloor = n;
   }
 
   sinceMark() {
@@ -94,7 +101,11 @@ export class Scene {
 
   #onBranch(f) {
     this.#births.set(f, this.#steps);
-    if (!this.#branch) this.#branch = { filament: f, step: this.#steps };
+    if (!this.#branch && this.#counts()) this.#branch = { filament: f, step: this.#steps };
+  }
+
+  #counts() {
+    return this.#steps - this.#mark >= this.#eventFloor;
   }
 
   #forgetOldBirths() {
