@@ -92,11 +92,11 @@ export const ACTIN_TOUR = [
   },
   {
     title: "Ohne Arp2/3",
-    text: "Ohne Arp2/3 entstehen keine neuen Plus-Enden. Capping-Protein kappt die vorhandenen nach und nach, und der Vorschub erlahmt.",
-    setup: (s) => fresh(s, { ...ALL, arp23: false }),
-    speed: 3,
-    until: (s) => s.sinceMark() >= 600,
-    highlights: () => [{ type: "ring", target: "front", label: "kaum noch wachsende Plus-Enden" }],
+    text: "Arp2/3 wird jetzt abgeschaltet: es entstehen keine neuen Plus-Enden mehr. Capping-Protein kappt die vorhandenen nach und nach. Die letzten wachsen sogar schneller, weil ihnen mehr freie Monomere bleiben. Sind alle gekappt, bleibt die Membran stehen.",
+    setup: (s) => { fresh(s); s.treat({ arp23: false }); },
+    speed: 2,
+    until: (s) => s.growingEnds() === 0 || s.sinceMark() >= 1500,
+    highlights: (s) => [{ type: "ring", target: "front", label: s.growingEnds() === 0 ? "keine wachsenden Plus-Enden mehr" : "die Plus-Enden werden gekappt" }],
   },
   {
     title: "Selbst ausprobieren",
