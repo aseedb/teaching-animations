@@ -47,10 +47,11 @@ export class Tour {
     return this.step().highlights(this.#sim);
   }
 
-  tick() {
+  // one call per animation frame; `frames` is how many 60 Hz frames it covers
+  tick(frames = 1) {
     if (this.#waiting || this.#over) return;
     const step = this.step();
-    this.#pending += step.speed;
+    this.#pending += step.speed * frames;
     while (this.#pending >= 1 && !this.#waiting) {
       this.#pending -= 1;
       if (step.until(this.#sim)) this.#waiting = true;
