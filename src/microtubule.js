@@ -11,15 +11,15 @@ export const CELL_EDGE_DIMERS = 1000; // 8 µm: the plus end meets the cell cort
 export const LATERAL_SLACK_DIMERS = 3; // lateral bonds keep protofilaments within a few dimers of the mean
 
 export const RATES = Object.freeze({
-  onPerMicromolar: 0.03, // per protofilament and step, per µM free tubulin
+  onPerMicromolar: 0.05, // per protofilament and step, per µM free tubulin
   hydrolysis: 0.08, // per buried GTP dimer and step
   gtpTipLoss: 0.12, // the terminal GTP dimer can dissociate: the cap fluctuates
   gdpTipLoss: 0.3, // a GDP dimer at the tip of a growing protofilament falls off
-  shrinkage: 3, // attempts per protofilament and step during shrinkage
+  shrinkage: 5, // attempts per protofilament and step during shrinkage
   shrinkageChance: 0.9,
-  spontaneousRescue: 0.01, // per step while shrinking
+  spontaneousRescue: 0.015, // per step while shrinking
   catastropheExposed: 9, // this many protofilaments with a GDP tip: catastrophe for sure
-  catastropheStrength: 0.3, // below that, chance per step = strength × (exposed / 13) ^ steepness
+  catastropheStrength: 1.5, // below that, chance per step = strength × (exposed / 13) ^ steepness
   catastropheSteepness: 2,
   rescueExposed: 7, // protofilaments with a GTP tip (an island) that stop shrinkage
 });

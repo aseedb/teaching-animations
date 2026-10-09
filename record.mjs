@@ -67,11 +67,14 @@ for (let i = 0; i < 50 && !(await evaluate("!!window.film").catch(() => false));
 await evaluate("document.fonts.ready.then(() => true)");
 await evaluate(`film.reset(); film.advance(${Number(warmup)}); film.draw()`);
 
+const phases = [];
 for (let f = 0; f < frames; f++) {
   await evaluate(`film.advance(${Number(stepsPerFrame)}); film.draw()`);
+  phases.push(await evaluate("window.film.phase ? film.phase() : null"));
   const shot = await send("Page.captureScreenshot", { format: "png", clip: { x: 0, y: 0, width: 1280, height: 720, scale: 1 } });
   writeFileSync(join(framesDir, `f_${String(f).padStart(5, "0")}.png`), Buffer.from(shot.data, "base64"));
 }
+writeFileSync(join(framesDir, "phases.json"), JSON.stringify(phases));
 ws.close();
 browser.kill();
 

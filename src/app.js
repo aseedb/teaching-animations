@@ -109,7 +109,7 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
   ctx.fillText("Zellrand", x1, top + font * 0.2);
   ctx.textAlign = "center";
   ctx.fillStyle = mt.phase() === "growing" ? c.gtp : c.catastrophe;
-  ctx.fillText("Plus-Ende", Math.min(Math.max(X(mean), x0 + font * 3), x1 - font * 4), y + height * 0.42 + font * 0.5);
+  ctx.fillText("Plus-Ende", Math.min(Math.max(X(mean), x0 + font * 3), x1 - font * 4), y - height * 0.3);
 }
 
 // band 2: the plus end, dimer by dimer, 13 protofilaments drawn side by side
@@ -117,14 +117,14 @@ function drawZoom(ctx, c, font, pad, w, top, height) {
   const pfs = mt.protofilaments();
   const tip = Math.max(...pfs.map((p) => p.length));
   const first = Math.max(0, tip - ZOOM_DIMERS);
-  const right = w - pad - font * 6;
+  const right = w - pad - font * 10;
   const dimerW = (right - pad) / (ZOOM_DIMERS + 2);
   const rowH = height / (PROTOFILAMENTS + 1);
   const X = (i) => pad + (i - first) * dimerW;
   const shrinking = mt.phase() === "shrinking";
   ctx.fillStyle = c["ink-soft"];
   ctx.textAlign = "left";
-  ctx.fillText("Plus-Ende vergrössert: 13 Protofilamente", pad, top - font * 0.4);
+  ctx.fillText("Plus-Ende vergrössert: 13 Protofilamente", pad, top - font * 0.2);
   pfs.forEach((states, r) => {
     const y = top + (r + 0.5) * rowH;
     const curlFrom = shrinking ? Math.max(first, states.length - PEEL_DIMERS) : states.length;
@@ -208,6 +208,7 @@ window.film = {
   reset() { reset(); },
   advance(steps) { advance(steps); },
   draw() { draw(); return true; },
+  phase() { return mt.phase(); },
 };
 
 reset();
