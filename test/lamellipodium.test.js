@@ -147,6 +147,37 @@ describe("LamellipodiumSpecification", () => {
     assert.ok(cell.filaments().filter((f) => !f.isCapped()).length >= 5);
   });
 
+  test("ShouldKeepTheNumberOfGrowingEndsSteady", () => {
+    // GIVEN
+    const cell = run(Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed())), 600);
+    // WHEN
+    const counts = [];
+    for (let w = 0; w < 30; w++) {
+      run(cell, 60);
+      counts.push(cell.filaments().filter((f) => !f.isCapped()).length);
+    }
+    // THEN
+    const mean = counts.reduce((s, x) => s + x, 0) / counts.length;
+    const sd = Math.sqrt(counts.reduce((s, x) => s + (x - mean) ** 2, 0) / counts.length);
+    assert.ok(sd / mean < 0.25, `mean ${mean.toFixed(1)} cv ${(sd / mean).toFixed(2)}`);
+  });
+
+  test("ShouldProtrudeAtASteadySpeed", () => {
+    // GIVEN
+    const cell = run(Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed())), 600);
+    // WHEN
+    const advances = [];
+    for (let w = 0; w < 30; w++) {
+      const before = cell.membraneX();
+      run(cell, 60);
+      advances.push(cell.membraneX() - before);
+    }
+    // THEN
+    const mean = advances.reduce((s, x) => s + x, 0) / advances.length;
+    const sd = Math.sqrt(advances.reduce((s, x) => s + (x - mean) ** 2, 0) / advances.length);
+    assert.ok(sd / mean < 0.2, `mean ${mean.toFixed(1)} cv ${(sd / mean).toFixed(2)}`);
+  });
+
   test("ShouldBranchWithinTwentyNanometresOfTheMembrane", () => {
     // GIVEN / WHEN / THEN
     assert.equal(BRANCH_ZONE_NM, 20);

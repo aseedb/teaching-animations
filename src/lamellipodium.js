@@ -17,15 +17,16 @@ export const RATES = Object.freeze({
   severingWithCofilin: 0.0015, // per ADP subunit
   branching: 0.03, // per filament whose tip is in the branch zone
   capping: 0.006, // per growing barbed end
+  // soft feedbacks instead of hard ceilings
+  monomerHalfSaturation: 1500, // pool at which polymerization runs at half speed
+  branchingHalfSaturation: 40, // growing ends at which branching runs at half speed
 });
 
-const REFERENCE_POOL = 2000;
 const INITIAL_POOL = 7000;
 const INITIAL_FILAMENTS = 14;
 const INITIAL_LENGTH = 25;
 const NETWORK_DEPTH_NM = 700;
 export const HALF_HEIGHT_NM = 180; // the band is periodic: a wider leading edge
-const MAX_FILAMENTS = 320;
 const DEG = Math.PI / 180;
 
 export class Lamellipodium {
@@ -93,7 +94,8 @@ export class Lamellipodium {
       this.#maybeCap(f);
     }
     const born = [];
-    for (const f of this.#filaments) this.#maybeBranch(f, born);
+    const growing = this.#filaments.filter((f) => !f.isCapped()).length;
+    for (const f of this.#filaments) this.#maybeBranch(f, born, growing);
     this.#filaments.push(...born);
     born.forEach((b) => this.#branchListeners.forEach((l) => l(b)));
     if (!this.#treatment.phalloidin) this.#disassemble();
@@ -131,7 +133,7 @@ export class Lamellipodium {
     const tip = f.barbedTip();
     const next = tip.x + SUBUNIT_NM * Math.cos(f.angle());
     const touching = next > this.#membraneX;
-    const p = this.#rates.polymerization * Math.min(1, this.#pool / REFERENCE_POOL) * (touching ? this.#rates.pushAgainstMembrane : 1);
+    const p = this.#rates.polymerization * this.#monomerSupply() * (touching ? this.#rates.pushAgainstMembrane : 1);
     if (!this.#random.chance(p)) return;
     f.polymerize();
     this.#pool -= 1;
@@ -145,15 +147,21 @@ export class Lamellipodium {
     if (y < -HALF_HEIGHT_NM) f.shiftY(2 * HALF_HEIGHT_NM);
   }
 
+  // fraction of the maximal polymerization rate, rising smoothly with the pool
+  #monomerSupply() {
+    return this.#pool / (this.#pool + this.#rates.monomerHalfSaturation);
+  }
+
   #maybeCap(f) {
     if (this.#treatment.capping && !f.isCapped() && this.#random.chance(this.#rates.capping)) f.cap();
   }
 
-  #maybeBranch(f, born) {
-    if (!this.#treatment.arp23 || this.#filaments.length + born.length >= MAX_FILAMENTS) return;
+  #maybeBranch(f, born, growing) {
+    if (!this.#treatment.arp23) return;
     const i = f.subunitCount() - 2;
     if (i < 0 || f.subunitPosition(i).x < this.#membraneX - BRANCH_ZONE_NM) return;
-    if (this.#pool <= 0 || !this.#random.chance(this.#rates.branching)) return;
+    const p = this.#rates.branching / (1 + growing / this.#rates.branchingHalfSaturation);
+    if (this.#pool <= 0 || !this.#random.chance(p)) return;
     const side = Math.abs(f.angle() + 70 * DEG) < Math.abs(f.angle() - 70 * DEG) ? 1 : -1;
     const branch = f.branchAt(i, side);
     branch.polymerize(); // Arp2/3 nucleates the daughter with a first ATP-actin
