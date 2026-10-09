@@ -119,6 +119,15 @@ describe("FilamentSpecification", () => {
     assert.ok(Math.abs(branch.angle() - f.angle() - (BRANCH_ANGLE_DEG * Math.PI) / 180) < 1e-9);
   });
 
+  test("ShouldMarkABranchAsBornFromArp23", () => {
+    // GIVEN
+    const f = filamentOf(Array(10).fill("ATP"));
+    // WHEN
+    const branch = f.branchAt(anyInt(0, 9), 1);
+    // THEN
+    assert.deepEqual([branch.isBranch(), f.isBranch()], [true, false]);
+  });
+
   test("ShouldStartTheBranchOnTheMotherFilament", () => {
     // GIVEN
     const f = filamentOf(Array(10).fill("ATP"));

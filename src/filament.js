@@ -11,6 +11,7 @@ export class Filament {
   #angle;
   #states = [];
   #capped = false;
+  #branch = false;
 
   constructor(pointed, angle) {
     this.#pointed = { ...pointed };
@@ -31,6 +32,10 @@ export class Filament {
 
   subunitCount() {
     return this.#states.length;
+  }
+
+  isBranch() {
+    return this.#branch;
   }
 
   isCapped() {
@@ -91,7 +96,9 @@ export class Filament {
   }
 
   branchAt(i, side) {
-    return new Filament(this.subunitPosition(i), this.#angle + (side * BRANCH_ANGLE_DEG * Math.PI) / 180);
+    const daughter = new Filament(this.subunitPosition(i), this.#angle + (side * BRANCH_ANGLE_DEG * Math.PI) / 180);
+    daughter.#branch = true;
+    return daughter;
   }
 
   #along(distance) {
