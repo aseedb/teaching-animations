@@ -38,6 +38,8 @@ export class Lamellipodium {
   #sequestered = 0;
   #stabilizedOutOfView = 0;
   #branchListeners = [];
+  #capListeners = [];
+  #severListeners = [];
   #rates;
 
   constructor(treatment, random, rates) {
@@ -78,6 +80,15 @@ export class Lamellipodium {
 
   onBranch(listener) {
     this.#branchListeners.push(listener);
+  }
+
+  onCap(listener) {
+    this.#capListeners.push(listener);
+  }
+
+  // the listener receives the position of the cut
+  onSever(listener) {
+    this.#severListeners.push(listener);
   }
 
   treat(change) {
@@ -153,7 +164,9 @@ export class Lamellipodium {
   }
 
   #maybeCap(f) {
-    if (this.#treatment.capping && !f.isCapped() && this.#random.chance(this.#rates.capping)) f.cap();
+    if (!this.#treatment.capping || f.isCapped() || !this.#random.chance(this.#rates.capping)) return;
+    f.cap();
+    this.#capListeners.forEach((l) => l(f));
   }
 
   #maybeBranch(f, born, growing) {
@@ -185,7 +198,9 @@ export class Lamellipodium {
     const states = f.states();
     for (let i = 1; i < states.length; i++) {
       if (states[i] === "ADP" && states[i - 1] === "ADP" && this.#random.chance(this.#rates.severingWithCofilin)) {
+        const cut = f.subunitPosition(i);
         const rear = f.severBefore(i);
+        this.#severListeners.forEach((l) => l(cut));
         this.#wrap(rear);
         pieces.push(rear);
         return;

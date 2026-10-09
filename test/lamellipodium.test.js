@@ -87,6 +87,50 @@ describe("LamellipodiumSpecification", () => {
     assert.ok(cell.pool() < pool * 0.2, `${pool} -> ${cell.pool()}`);
   });
 
+  test("ShouldReportEveryCappingWithTheCappedFilament", () => {
+    // GIVEN
+    const cell = Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed()));
+    const capped = [];
+    cell.onCap((f) => capped.push(f));
+    // WHEN
+    run(cell, 300);
+    // THEN
+    assert.ok(capped.length > 0 && capped.every((f) => f.hasCappingProtein()));
+  });
+
+  test("ShouldReportNoCappingWithoutCappingProtein", () => {
+    // GIVEN
+    const cell = Lamellipodium.create({ ...ALL_ON, capping: false }, SeededRandom.of(anySeed()));
+    let caps = 0;
+    cell.onCap(() => caps++);
+    // WHEN
+    run(cell, 300);
+    // THEN
+    assert.equal(caps, 0);
+  });
+
+  test("ShouldReportEverySeveringWhereTheCutHappened", () => {
+    // GIVEN
+    const cell = run(Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed())), 300);
+    const cuts = [];
+    cell.onSever((at) => cuts.push(at));
+    // WHEN
+    run(cell, 600);
+    // THEN
+    assert.ok(cuts.length > 0 && cuts.every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)));
+  });
+
+  test("ShouldReportNoSeveringWithoutCofilin", () => {
+    // GIVEN
+    const cell = Lamellipodium.create({ ...ALL_ON, cofilin: false }, SeededRandom.of(anySeed()));
+    let cuts = 0;
+    cell.onSever(() => cuts++);
+    // WHEN
+    run(cell, 600);
+    // THEN
+    assert.equal(cuts, 0);
+  });
+
   test("ShouldBranchOnlyNearTheMembrane", () => {
     // GIVEN
     const cell = run(Lamellipodium.create(ALL_ON, SeededRandom.of(anySeed())), 50);
