@@ -119,11 +119,19 @@ function draw() {
   ctx.textAlign = "center";
   ctx.fillText("Plasmamembran", 0, 0);
   ctx.restore();
-  ctx.fillStyle = c["ink-soft"];
-  ctx.textAlign = "left";
-  ctx.fillText("← älter: ADP, Abbau, Monomere zurück in den Pool", 10, h - font * 0.8);
-  ctx.textAlign = "right";
-  ctx.fillText("Plus-Enden zur Membran →", X(m) - 10, h - font * 0.8);
+  const caption = (text, x, align) => {
+    ctx.textAlign = align;
+    const tw = ctx.measureText(text).width;
+    const left = align === "left" ? x - 4 : x - tw - 4;
+    ctx.fillStyle = c.cytoplasm;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(left, h - font * 2, tw + 8, font * 1.6);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = c["ink-soft"];
+    ctx.fillText(text, x, h - font * 0.8);
+  };
+  caption("← älter: ADP, Abbau, Monomere zurück in den Pool", 10, "left");
+  caption("Plus-Enden zur Membran →", X(m) - 10, "right");
   if (FILM) drawFilmLegend(ctx, w, h, c, font);
 }
 
