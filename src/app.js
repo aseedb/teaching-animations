@@ -37,10 +37,22 @@ function treatmentFromControls() {
 let cell;
 let playing = true;
 let speedHistory = [];
+let stepCount = 0;
+let births = new Map(); // Arp2/3 daughter → step of its birth, for the pulse
+const PULSE_STEPS = 40;
 
 function reset() {
   cell = Lamellipodium.create(treatmentFromControls(), SeededRandom.of(SEED));
   speedHistory = [];
+  stepCount = 0;
+  births = new Map();
+  cell.onBranch((b) => births.set(b, stepCount));
+}
+
+function stepCell() {
+  cell.step();
+  stepCount += 1;
+  if (stepCount % 200 === 0) for (const [f, t] of births) if (stepCount - t > PULSE_STEPS) births.delete(f);
 }
 
 function fit(canvas) {
@@ -94,6 +106,26 @@ function draw() {
         const p = f.pointedEnd();
         ctx.fillStyle = c.arp;
         ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), Math.max(2.5, 2.2 * scale), 0, Math.PI * 2); ctx.fill();
+        const age = births.has(f) ? stepCount - births.get(f) : Infinity;
+        if (age < PULSE_STEPS) {
+          // a new branch: a new plus end is born
+          const k = age / PULSE_STEPS;
+          ctx.strokeStyle = c.arp;
+          ctx.globalAlpha = 1 - k;
+          ctx.lineWidth = Math.max(1.5, 1.2 * scale);
+          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), (3 + 10 * k) * scale, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+          ctx.lineWidth = Math.max(1.6, SUBUNIT_NM * 0.9 * scale);
+        }
+      }
+      if (!f.isCapped() && states.length) {
+        const t = f.barbedTip();
+        const r = Math.max(2.5, 2.1 * scale);
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = c.ink;
+        ctx.lineWidth = Math.max(1, 0.6 * scale);
+        ctx.beginPath(); ctx.arc(X(t.x), Y(t.y + dy), r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.lineWidth = Math.max(1.6, SUBUNIT_NM * 0.9 * scale);
       }
       if (f.hasCappingProtein() && states.length) {
         const t = f.barbedTip();
@@ -131,13 +163,42 @@ function draw() {
     ctx.fillStyle = c["ink-soft"];
     ctx.fillText(text, x, h - font * 0.8);
   };
+  drawExplanation(ctx, h, c, font);
   caption("← älter: ADP, Abbau, Monomere zurück in den Pool", 10, "left");
   caption("Plus-Enden zur Membran →", X(m) - 10, "right");
   if (FILM) drawFilmLegend(ctx, w, h, c, font);
 }
 
+const EXPLANATION = [
+  ["Arp2/3", "arp", "setzt seitlich ein Tochterfilament an (70°); jede Verzweigung bringt ein neues Plus-Ende"],
+  ["Capping-Protein", "capping", "kappt ein Plus-Ende; es wächst nicht weiter"],
+  ["Cofilin", "adp", "zerlegt alte ADP-Filamente; die Monomere kehren zurück"],
+];
+
+function drawExplanation(ctx, h, c, font) {
+  const line = font * 1.5;
+  const top = h - font * 2.4 - EXPLANATION.length * line - font * 0.6;
+  const widths = EXPLANATION.map(([name, , text]) => ctx.measureText(`${name}: ${text}`).width);
+  ctx.fillStyle = c.cytoplasm;
+  ctx.globalAlpha = 0.9;
+  ctx.fillRect(4, top - font * 0.4, Math.max(...widths) + font * 2.6, EXPLANATION.length * line + font * 0.6);
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
+  EXPLANATION.forEach(([name, color, text], k) => {
+    const y = top + (k + 0.8) * line;
+    ctx.fillStyle = c[color];
+    ctx.fillRect(10, y - font * 0.45, font * 1.1, font * 0.5);
+    ctx.font = `bold ${font}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.fillStyle = c.ink;
+    ctx.fillText(`${name}:`, 10 + font * 1.5, y);
+    const nameW = ctx.measureText(`${name}: `).width;
+    ctx.font = `${font}px ${getComputedStyle(document.body).fontFamily}`;
+    ctx.fillText(text, 10 + font * 1.5 + nameW, y);
+  });
+}
+
 function drawFilmLegend(ctx, w, h, c, font) {
-  const items = [["ATP-Aktin", c.atp], ["ADP-Pi-Aktin", c.adppi], ["ADP-Aktin", c.adp], ["Arp2/3", c.arp], ["Capping-Protein", c.capping]];
+  const items = [["ATP-Aktin", c.atp], ["ADP-Pi-Aktin", c.adppi], ["ADP-Aktin", c.adp], ["Arp2/3", c.arp], ["Capping-Protein", c.capping], ["wachsendes Plus-Ende", "#ffffff"]];
   let x = 10;
   const y = font * 1.6;
   ctx.textAlign = "left";
@@ -147,8 +208,13 @@ function drawFilmLegend(ctx, w, h, c, font) {
   ctx.fillRect(0, 0, total + 10, font * 2.4);
   ctx.globalAlpha = 1;
   for (const [label, color] of items) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y - font * 0.45, font * 1.1, font * 0.5);
+    if (color === "#ffffff") {
+      ctx.fillStyle = color; ctx.strokeStyle = c.ink; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x + font * 0.55, y - font * 0.2, font * 0.35, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y - font * 0.45, font * 1.1, font * 0.5);
+    }
     ctx.fillStyle = c.ink;
     ctx.fillText(label, x + font * 1.4, y);
     x += font * 1.4 + ctx.measureText(label).width + font * 1.2;
@@ -183,7 +249,7 @@ function frame() {
     pending += SPEEDS[Number($("speed").value)];
     const steps = Math.floor(pending);
     pending -= steps;
-    for (let i = 0; i < steps; i++) cell.step();
+    for (let i = 0; i < steps; i++) stepCell();
     if (steps) updateReadout();
   }
   draw();
@@ -201,7 +267,7 @@ function showSpeed() {
   $("speed-out").textContent = perSecond < 2 ? `${perSecond.toFixed(1)} Schritte/s` : `${Math.round(perSecond)} Schritte/s`;
 }
 $("speed").addEventListener("input", showSpeed);
-$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Weiter"; cell.step(); updateReadout(); draw(); });
+$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Weiter"; stepCell(); updateReadout(); draw(); });
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
 showSpeed();
 
@@ -210,7 +276,7 @@ if (FILM) document.body.classList.add("film");
 window.film = {
   reset() { reset(); },
   treat(change) { cell.treat(change); },
-  advance(steps) { for (let i = 0; i < steps; i++) cell.step(); },
+  advance(steps) { for (let i = 0; i < steps; i++) stepCell(); },
   draw() { draw(); return true; },
 };
 
