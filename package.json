@@ -1,0 +1,9 @@
+{
+  "name": "sarkomer-kraft-laenge",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  }
+}
