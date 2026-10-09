@@ -183,6 +183,16 @@ function drawPlot(ctx, c, font, pad, w, top, height) {
   }
 }
 
+const READOUT_INTERVAL_MS = 500; // numbers below the stage change twice a second, not every frame
+let lastReadout = 0;
+
+function updateReadoutSometimes() {
+  const now = performance.now();
+  if (now - lastReadout < READOUT_INTERVAL_MS) return;
+  lastReadout = now;
+  updateReadout();
+}
+
 function updateReadout() {
   const phase = mt.phase();
   $("readout").innerHTML =
@@ -201,7 +211,7 @@ function frame() {
     pending += SPEEDS[Number($("speed").value)];
     const steps = Math.floor(pending);
     pending -= steps;
-    if (steps) { advance(steps); updateReadout(); }
+    if (steps) { advance(steps); updateReadoutSometimes(); }
   }
   draw();
   requestAnimationFrame(frame);
