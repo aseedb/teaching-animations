@@ -12,7 +12,7 @@ const STRETCHED = 4.0;
 const SPECIES = { rabbit: Species.rabbit(), frog: Species.frog() };
 const SPECIES_NOTE = {
   rabbit: "Kaninchen (M. psoas): Aktinfilament 1.13 µm, Myosinfilament 1.65 µm. Optimale Länge 2.26 bis 2.46 µm; Titin beginnt ab etwa 2.65 µm passive Spannung zu tragen.",
-  frog: "Frosch (M. semitendinosus): die klassische Messung von Gordon, Huxley und Julian (1966). Plateau 2.05 bis 2.2 µm, keine aktive Kraft mehr ab 3.65 µm. Für den Frosch ist hier keine Titinkurve hinterlegt.",
+  frog: "Frosch (M. semitendinosus): die klassische Messung von Gordon, Huxley und Julian (1966). Plateau 2.05 bis 2.2 µm, keine aktive Kraft mehr ab 3.65 µm. Titin wird gezeigt, für den Frosch ist hier aber keine Kurve der passiven Spannung hinterlegt.",
 };
 
 const $ = (id) => document.getElementById(id);
@@ -75,7 +75,7 @@ function drawSarcomere(canvas, sarcomere, opts) {
   const rows = [0, 1, 2, 3, 4].map((i) => top + ((bottom - top) * i) / 4);
   const thinRows = [rows[0], rows[2], rows[4]];
   const thickRows = [rows[1], rows[3]];
-  const passive = opts.titin ? sarcomere.passiveTension() ?? 0 : 0;
+  const passive = opts.titin ? (sarcomere.passiveTension() ?? 0) : 0;
 
   // M line
   ctx.strokeStyle = c["ink-soft"];
@@ -84,17 +84,17 @@ function drawSarcomere(canvas, sarcomere, opts) {
   ctx.beginPath(); ctx.moveTo(X(0), rows[0] - 14); ctx.lineTo(X(0), rows[4] + 14); ctx.stroke();
   ctx.setLineDash([]);
 
-  // titin: from Z disc to the tip of the thick filament
+  // titin, elastic part: zigzag spring in the I band, from Z disc to thick filament tip
+  const titinColor = passive > 0.02 ? c["titin-taut"] : c.titin;
   if (opts.titin) {
-    ctx.strokeStyle = passive > 0.02 ? c["titin-taut"] : c.titin;
+    ctx.strokeStyle = titinColor;
     ctx.lineWidth = 1.4;
-    const [left, right] = layout.zDiscs;
-    const [tl, tr] = layout.thickFilament;
-    const span = Math.max(0, X(tl) - X(left));
     const amplitude = Math.max(0.6, 5 * (1 - Math.min(1, passive * 1.5)));
     for (const y of thickRows) {
-      drawZigzag(ctx, X(left), X(tl), y, amplitude, Math.max(2, Math.round(span / 9)));
-      drawZigzag(ctx, X(tr), X(right), y, amplitude, Math.max(2, Math.round(span / 9)));
+      for (const [a, b] of layout.titinSpring) {
+        const span = Math.max(0, X(b) - X(a));
+        drawZigzag(ctx, X(a), X(b), y, amplitude, Math.max(2, Math.round(span / 9)));
+      }
     }
   }
 
@@ -134,6 +134,17 @@ function drawSarcomere(canvas, sarcomere, opts) {
           ctx.lineTo(X(sx) + tilt * (isBound ? 5 : 3), y + dir * reach);
           ctx.stroke();
         }
+      }
+    }
+  }
+
+  // titin, bound part: along the thick filament up to the M line (inextensible)
+  if (opts.titin) {
+    ctx.strokeStyle = titinColor;
+    ctx.lineWidth = 1.6;
+    for (const y of thickRows) {
+      for (const [a, b] of layout.titinBound) {
+        ctx.beginPath(); ctx.moveTo(X(a), y); ctx.lineTo(X(b), y); ctx.stroke();
       }
     }
   }
@@ -232,9 +243,10 @@ function render() {
   const species = SPECIES[state.species];
   const sarcomere = Sarcomere.of(species, state.length);
   const colors = palette();
-  const titin = state.titin && species.titinOnset() !== null;
+  const titin = state.titin;
+  const titinCurve = titin && species.titinOnset() !== null;
   drawSarcomere($("sarcomere"), sarcomere, { colors, species, titin, bridges: state.bridges });
-  drawCurve($("curve"), species, state.length, { colors, titin });
+  drawCurve($("curve"), species, state.length, { colors, titin: titinCurve });
 
   const b = sarcomere.bands();
   $("length-out").textContent = `${fmt(state.length)} µm`;
@@ -242,16 +254,14 @@ function render() {
   $("bands").innerHTML = `<span>A-Bande <b>${fmt(b.aBand)} µm</b></span><span>I-Bande <b>${fmt(b.iBand)} µm</b></span><span>H-Zone <b>${fmt(b.hZone)} µm</b></span>`;
   const passive = sarcomere.passiveTension();
   $("forces").innerHTML = `<span>aktive Kraft <b>${Math.round(sarcomere.activeForce() * 100)} %</b></span>` +
-    (titin ? `<span>passive Spannung <b>${Math.round(passive * 100)} %</b></span>` : "");
+    (titinCurve ? `<span>passive Spannung <b>${Math.round(passive * 100)} %</b></span>` : "");
   const region = explain(sarcomere.region());
   $("region-title").textContent = region.title;
   $("region-text").textContent = region.text;
   $("species-note").textContent = SPECIES_NOTE[state.species];
-  const noTitin = species.titinOnset() === null;
-  $("titin").disabled = noTitin;
-  $("titin-label").setAttribute("aria-disabled", String(noTitin));
   $("legend-titin").hidden = !titin;
-  $("legend-passive").hidden = !titin;
+  $("legend-titin-taut").hidden = !titinCurve;
+  $("legend-passive").hidden = !titinCurve;
 }
 
 function tick(time) {

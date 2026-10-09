@@ -65,6 +65,9 @@ export class Sarcomere {
       thin: [[-half, -half + thinFromZ], [half - thinFromZ, half]],
       thickFilament: [-thickHalf, thickHalf],
       boundHeads: bound,
+      // titin spans each half sarcomere: elastic in the I band, bound to the thick filament in the A band
+      titinSpring: [[-half, -thickHalf], [thickHalf, half]],
+      titinBound: [[-thickHalf, 0], [0, thickHalf]],
     };
   }
 

@@ -80,6 +80,34 @@ describe("SarcomereLayoutSpecification", () => {
     assert.deepEqual(boundHeads, []);
   });
 
+  test("ShouldStretchTitinSpringFromTheZDiscToTheThickFilamentTip", () => {
+    // GIVEN
+    const species = anySpecies();
+    const { thick, zDisc } = species.filaments();
+    const length = anyBetween(thick + zDisc, 4.2);
+    // WHEN
+    const { titinSpring } = Sarcomere.of(species, length).layout();
+    // THEN
+    assert.deepEqual(titinSpring, [
+      [-length / 2, -thick / 2],
+      [thick / 2, length / 2],
+    ]);
+  });
+
+  test("ShouldBindTitinAlongTheThickFilamentUpToTheMLine", () => {
+    // GIVEN
+    const species = anySpecies();
+    const { thick, zDisc } = species.filaments();
+    const length = anyBetween(thick + zDisc, 4.2);
+    // WHEN
+    const { titinBound } = Sarcomere.of(species, length).layout();
+    // THEN
+    assert.deepEqual(titinBound, [
+      [-thick / 2, 0],
+      [0, thick / 2],
+    ]);
+  });
+
   test("ShouldMirrorTheBoundHeadsAboutTheMLine", () => {
     // GIVEN
     const species = anySpecies();
