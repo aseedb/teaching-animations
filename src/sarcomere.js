@@ -7,6 +7,8 @@
 // (weight INTERFERENCE), and once thick filaments push on the Z discs force
 // falls linearly to zero over CONTRACTURE_SPAN.
 
+import { regionOf } from "./region.js";
+
 export const CONTRACTURE_SPAN = 0.4;
 export const INTERFERENCE = 0.5;
 
@@ -48,6 +50,10 @@ export class Sarcomere {
     const { thickMeetsZ } = Sarcomere.landmarks(this.#species);
     if (this.#length >= thickMeetsZ) return this.#crossBridgeForce();
     return Sarcomere.of(this.#species, thickMeetsZ).#crossBridgeForce() * this.#contracture();
+  }
+
+  region() {
+    return regionOf(this.#length, Sarcomere.landmarks(this.#species));
   }
 
   passiveTension() {
