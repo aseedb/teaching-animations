@@ -43,6 +43,14 @@ export class Scene {
     return this.#steps;
   }
 
+  treat(change) {
+    this.#cell.treat(change);
+  }
+
+  growingEnds() {
+    return this.#cell.filaments().filter((f) => !f.isCapped()).length;
+  }
+
   mark() {
     this.#mark = this.#steps;
     this.#markX = this.#cell.membraneX();

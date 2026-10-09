@@ -93,6 +93,25 @@ describe("ActinSceneSpecification", () => {
     assert.deepEqual(scene.severSinceMark().pieces?.map((f) => f.subunitCount() > 0), [true, true]);
   });
 
+  test("ShouldChangeTheTreatmentOfTheRunningCell", () => {
+    // GIVEN
+    const scene = Scene.empty();
+    scene.reset(anySeed(), 300, ALL_ON);
+    // WHEN
+    scene.treat({ arp23: false });
+    // THEN
+    assert.equal(scene.cell().treatment().arp23, false);
+  });
+
+  test("ShouldCountTheGrowingPlusEnds", () => {
+    // GIVEN
+    const scene = Scene.empty();
+    // WHEN
+    scene.reset(anySeed(), 300, ALL_ON);
+    // THEN
+    assert.equal(scene.growingEnds(), scene.cell().filaments().filter((f) => !f.isCapped()).length);
+  });
+
   test("ShouldIgnoreEventsDuringTheLeadIn", () => {
     // GIVEN
     const scene = Scene.empty();
