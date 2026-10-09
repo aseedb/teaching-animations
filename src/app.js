@@ -86,6 +86,7 @@ function drawSarcomere(canvas, sarcomere, opts) {
 
   // titin, elastic part: zigzag spring in the I band, from Z disc to thick filament tip
   const titinColor = passive > 0.02 ? c["titin-taut"] : c.titin;
+  const TITIN_OFFSET = -6; // just above the myosin backbone, so it stays visible
   if (opts.titin) {
     ctx.strokeStyle = titinColor;
     ctx.lineWidth = 1.4;
@@ -93,7 +94,7 @@ function drawSarcomere(canvas, sarcomere, opts) {
     for (const y of thickRows) {
       for (const [a, b] of layout.titinSpring) {
         const span = Math.max(0, X(b) - X(a));
-        drawZigzag(ctx, X(a), X(b), y, amplitude, Math.max(2, Math.round(span / 9)));
+        drawZigzag(ctx, X(a), X(b), y + TITIN_OFFSET, amplitude, Math.max(2, Math.round(span / 9)));
       }
     }
   }
@@ -141,10 +142,10 @@ function drawSarcomere(canvas, sarcomere, opts) {
   // titin, bound part: along the thick filament up to the M line (inextensible)
   if (opts.titin) {
     ctx.strokeStyle = titinColor;
-    ctx.lineWidth = 1.6;
+    ctx.lineWidth = 2;
     for (const y of thickRows) {
       for (const [a, b] of layout.titinBound) {
-        ctx.beginPath(); ctx.moveTo(X(a), y); ctx.lineTo(X(b), y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(X(a), y + TITIN_OFFSET); ctx.lineTo(X(b), y + TITIN_OFFSET); ctx.stroke();
       }
     }
   }
