@@ -10,6 +10,11 @@
 export const CONTRACTURE_SPAN = 0.4;
 export const INTERFERENCE = 0.5;
 
+// Titin passive tension is schematic: zero up to the attested onset, then a
+// stiffening power law scaled to equal the maximal active force where the
+// filaments stop overlapping. Its height is not taken from any measurement.
+export const TITIN_STIFFENING = 3;
+
 const clamp = (value, lo, hi) => Math.max(lo, Math.min(hi, value));
 
 export class Sarcomere {
@@ -43,6 +48,14 @@ export class Sarcomere {
     const { thickMeetsZ } = Sarcomere.landmarks(this.#species);
     if (this.#length >= thickMeetsZ) return this.#crossBridgeForce();
     return Sarcomere.of(this.#species, thickMeetsZ).#crossBridgeForce() * this.#contracture();
+  }
+
+  passiveTension() {
+    const onset = this.#species.titinOnset();
+    if (onset === null) return null;
+    const { zeroForce } = Sarcomere.landmarks(this.#species);
+    const stretch = Math.max(0, this.#length - onset) / (zeroForce - onset);
+    return stretch ** TITIN_STIFFENING;
   }
 
   #crossBridgeForce() {
