@@ -13,6 +13,12 @@ function filamentOf(states) {
   return f;
 }
 
+function branchOf(states) {
+  const branch = filamentOf(Array(10).fill("ATP")).branchAt(anyInt(0, 9), 1);
+  for (const s of states) branch.addAtBarbedEnd(s);
+  return branch;
+}
+
 describe("FilamentSpecification", () => {
   test("ShouldAddATPActinAtTheBarbedEnd", () => {
     // GIVEN
@@ -146,6 +152,24 @@ describe("FilamentSpecification", () => {
     const rear = f.severBefore(anyInt(1, 9));
     // THEN
     assert.deepEqual([rear.isCapped(), rear.hasCappingProtein()], [true, false]);
+  });
+
+  test("ShouldLeaveArp23OnTheRearPieceWhenABranchIsSevered", () => {
+    // GIVEN
+    const branch = branchOf(Array(10).fill("ADP"));
+    // WHEN
+    const rear = branch.severBefore(anyInt(1, 9));
+    // THEN
+    assert.equal(rear.isBranch(), true);
+  });
+
+  test("ShouldFreeTheBarbedPieceOfASeveredBranchFromArp23", () => {
+    // GIVEN
+    const branch = branchOf(Array(10).fill("ADP"));
+    // WHEN
+    branch.severBefore(anyInt(1, 9));
+    // THEN
+    assert.equal(branch.isBranch(), false);
   });
 
   test("ShouldCarryCappingProteinWhenCapped", () => {

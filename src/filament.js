@@ -96,6 +96,8 @@ export class Filament {
     const rear = new Filament(this.#pointed, this.#angle);
     this.#states.slice(0, at).forEach((s) => rear.addAtBarbedEnd(s));
     rear.#capped = true; // the severed rear piece does not regrow in this model
+    rear.#branch = this.#branch; // Arp2/3 stays at the old pointed end
+    this.#branch = false;
     this.#pointed = this.#along(at * SUBUNIT_NM);
     this.#states = this.#states.slice(at);
     return rear;
