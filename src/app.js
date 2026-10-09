@@ -228,6 +228,16 @@ function noteKey(t) {
   return "normal";
 }
 
+const READOUT_INTERVAL_MS = 500; // numbers below the stage change twice a second, not every frame
+let lastReadout = 0;
+
+function updateReadoutSometimes() {
+  const now = performance.now();
+  if (now - lastReadout < READOUT_INTERVAL_MS) return;
+  lastReadout = now;
+  updateReadout();
+}
+
 function updateReadout() {
   const t = cell.treatment();
   const fs = cell.filaments();
@@ -250,7 +260,7 @@ function frame() {
     const steps = Math.floor(pending);
     pending -= steps;
     for (let i = 0; i < steps; i++) stepCell();
-    if (steps) updateReadout();
+    if (steps) updateReadoutSometimes();
   }
   draw();
   if (!FILM) requestAnimationFrame(frame);
