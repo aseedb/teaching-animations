@@ -109,7 +109,10 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
   ctx.fillText("Zellrand", x1, top + font * 0.2);
   ctx.textAlign = "center";
   ctx.fillStyle = mt.phase() === "growing" ? c.gtp : c.catastrophe;
-  ctx.fillText("Plus-Ende", Math.min(Math.max(X(mean), x0 + font * 3), x1 - font * 4), y - height * 0.3);
+  const state = { growing: "Plus-Ende wächst", shrinking: "Katastrophe: Plus-Ende schrumpft", rescue: "Rettung: Plus-Ende wächst wieder", edge: "Zellrand erreicht: Katastrophe" }[note];
+  ctx.font = `bold ${font}px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.fillText(state, Math.min(Math.max(X(mean), x0 + font * 9), x1 - font * 10), y - height * 0.3);
+  ctx.font = `${font}px ${getComputedStyle(document.body).fontFamily}`;
 }
 
 // band 2: the plus end, dimer by dimer, 13 protofilaments drawn side by side
@@ -136,9 +139,9 @@ function drawZoom(ctx, c, font, pad, w, top, height) {
         // ram's horns: the GDP protofilament curls away from the lattice
         const k = i - curlFrom + 1;
         const side = r < PROTOFILAMENTS / 2 ? -1 : 1;
-        const angle = side * k * 0.22;
-        const cx = X(curlFrom) + Math.sin(Math.abs(angle)) * k * dimerW * 0.9;
-        const cy = y + side * (1 - Math.cos(angle)) * k * dimerW * 1.4;
+        const angle = side * k * 0.16;
+        const cx = X(curlFrom) + Math.sin(Math.abs(angle)) * k * dimerW * 0.8;
+        const cy = y + side * (1 - Math.cos(angle)) * k * dimerW * 0.7;
         ctx.save(); ctx.translate(cx, cy); ctx.rotate(angle);
         ctx.fillRect(0, -rowH * 0.36, dimerW - 2, rowH * 0.72);
         ctx.restore();
