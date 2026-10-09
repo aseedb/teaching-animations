@@ -11,7 +11,7 @@ const SEED = 4;
 const ZOOM_DIMERS = 60; // dimers shown behind the plus end in the zoom band
 const PEEL_DIMERS = 7; // curled dimers per protofilament while shrinking
 const FILM = location.hash === "#film";
-const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per frame, from very slow to fast
+const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per 60 Hz frame, from very slow to fast
 const READOUT_INTERVAL_MS = 500; // numbers below the stage change twice a second, not every frame
 
 const NOTES = {
@@ -298,14 +298,21 @@ function endTour() {
 
 // ---- loop and wiring -----------------------------------------------------
 
-function frame() {
+// the pace follows the clock, not the screen's refresh rate (60 or 120 Hz)
+const FRAME_MS = 1000 / 60;
+const MAX_FRAMES_PER_TICK = 4; // after a pause (hidden tab), do not jump ahead
+let lastFrame = null;
+
+function frame(now) {
+  const frames = lastFrame === null ? 1 : Math.min(MAX_FRAMES_PER_TICK, (now - lastFrame) / FRAME_MS);
+  lastFrame = now;
   if (tour) {
     const wasWaiting = tour.isWaiting();
-    tour.tick();
+    tour.tick(frames);
     if (tour.isWaiting() !== wasWaiting) { updateTourState(); updateReadout(); }
     else updateReadoutSometimes();
   } else if (playing) {
-    pending += SPEEDS[Number($("speed").value)];
+    pending += SPEEDS[Number($("speed").value)] * frames;
     const steps = Math.floor(pending);
     pending -= steps;
     if (steps) { scene.advance(steps); updateReadoutSometimes(); }
