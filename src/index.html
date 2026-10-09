@@ -84,7 +84,8 @@
   fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
   legend { font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0; margin-bottom: 2px; width: 100%; }
   fieldset label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-size: 0.95rem; }
-  .speed { display: grid; gap: 2px; min-width: 160px; font-size: 0.9rem; }
+  .speed { display: grid; gap: 2px; min-width: 200px; font-size: 0.9rem; }
+  .speed output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: 6px; }
   input[type="range"] { accent-color: var(--accent); }
   .stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
   canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: var(--cytoplasm); }
@@ -115,9 +116,10 @@
   <section class="controls" aria-label="Steuerung">
     <div class="buttons">
       <button id="play" class="primary" type="button">Pause</button>
+      <button id="step" type="button">Einzelschritt</button>
       <button id="reset" type="button">Neu starten</button>
     </div>
-    <label class="speed" for="speed">Tempo <input id="speed" type="range" min="1" max="4" step="1" value="2"></label>
+    <label class="speed" for="speed"><span>Tempo <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
     <fieldset>
       <legend>Proteine</legend>
       <label><input id="arp23" type="checkbox" checked> Arp2/3 (Verzweigung)</label>

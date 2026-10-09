@@ -10,6 +10,8 @@ const VIEW_BEHIND_NM = 480; // network shown behind the membrane
 const VIEW_AHEAD_NM = 50; // outside of the cell
 const BAND = 2 * HALF_HEIGHT_NM;
 const FILM = location.hash === "#film";
+const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per frame, from very slow to fast
+let pending = 0;
 
 const NOTES = {
   normal: ["Tretmühle", "Vorne wird ATP-Aktin eingebaut, das Netz altert nach hinten (ATP → ADP-Pi → ADP), Cofilin zerlegt die alten ADP-Filamente, und Profilin bringt die Monomere als ATP-Aktin wieder nach vorne."],
@@ -178,9 +180,11 @@ function updateReadout() {
 
 function frame() {
   if (playing) {
-    const steps = Number($("speed").value);
+    pending += SPEEDS[Number($("speed").value)];
+    const steps = Math.floor(pending);
+    pending -= steps;
     for (let i = 0; i < steps; i++) cell.step();
-    updateReadout();
+    if (steps) updateReadout();
   }
   draw();
   if (!FILM) requestAnimationFrame(frame);
@@ -192,7 +196,14 @@ for (const id of PROTEINS) {
 $("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Weiter"; });
 $("reset").addEventListener("click", () => { reset(); updateReadout(); draw(); });
 window.addEventListener("resize", draw);
-if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 1;
+function showSpeed() {
+  const perSecond = SPEEDS[Number($("speed").value)] * 60;
+  $("speed-out").textContent = perSecond < 2 ? `${perSecond.toFixed(1)} Schritte/s` : `${Math.round(perSecond)} Schritte/s`;
+}
+$("speed").addEventListener("input", showSpeed);
+$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Weiter"; cell.step(); updateReadout(); draw(); });
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
+showSpeed();
 
 // film mode: driven frame by frame from outside (headless recording)
 if (FILM) document.body.classList.add("film");
