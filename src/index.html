@@ -1,0 +1,156 @@
+<title>Aktin am Lamellipodium</title>
+<meta name="description" content="Wie die Polymerisation von Aktin die Membran einer kriechenden Zelle nach vorne schiebt: Arp2/3, Capping-Protein, Cofilin, Latrunculin und Phalloidin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* layout: one wide stage (16:9, also the film frame), controls above, explanation below */
+  :root {
+    --ground: #f4f5f7;
+    --surface: #ffffff;
+    --ink: #1d2230;
+    --ink-soft: #586075;
+    --rule: #d8dce5;
+    --cytoplasm: #fbfbfd;
+    --outside: #e8edf5;
+    --membrane: #2b5fa8;
+    --atp: #f2b51c;
+    --adppi: #e0722b;
+    --adp: #8c2f39;
+    --arp: #7a4fd0;
+    --capping: #1f8a8a;
+    --accent: #2b5fa8;
+    --accent-ink: #ffffff;
+    --note-bg: #eaf0f8;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #12141a;
+      --surface: #1b1e26;
+      --ink: #eceef4;
+      --ink-soft: #a5acbd;
+      --rule: #2e3340;
+      --cytoplasm: #15181f;
+      --outside: #1f2734;
+      --membrane: #7aa8f0;
+      --atp: #ffd25a;
+      --adppi: #ff9a55;
+      --adp: #d0606c;
+      --arp: #b49bff;
+      --capping: #4fd1cf;
+      --accent: #7aa8f0;
+      --accent-ink: #0f1218;
+      --note-bg: #1e2a3a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #12141a;
+    --surface: #1b1e26;
+    --ink: #eceef4;
+    --ink-soft: #a5acbd;
+    --rule: #2e3340;
+    --cytoplasm: #15181f;
+    --outside: #1f2734;
+    --membrane: #7aa8f0;
+    --atp: #ffd25a;
+    --adppi: #ff9a55;
+    --adp: #d0606c;
+    --arp: #b49bff;
+    --capping: #4fd1cf;
+    --accent: #7aa8f0;
+    --accent-ink: #0f1218;
+    --note-bg: #1e2a3a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+  .page { max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
+  .page > * { min-width: 0; }
+  header { display: grid; gap: 6px; }
+  h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.3rem); line-height: 1.1; text-wrap: balance; }
+  .lede { margin: 0; color: var(--ink-soft); max-width: 75ch; }
+  .controls {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+  }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; line-height: 1.2; border-radius: 7px; padding: 8px 14px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 7rem; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--adppi); outline-offset: 2px; }
+  fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  legend { font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0; margin-bottom: 2px; width: 100%; }
+  fieldset label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-size: 0.95rem; }
+  .speed { display: grid; gap: 2px; min-width: 160px; font-size: 0.9rem; }
+  input[type="range"] { accent-color: var(--accent); }
+  .stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+  canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: var(--cytoplasm); }
+  .readout { display: flex; flex-wrap: wrap; gap: 6px 22px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; color: var(--ink-soft); }
+  .readout b { color: var(--ink); font-weight: 500; }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 0.9rem; color: var(--ink-soft); }
+  .legend span::before { content: ""; display: inline-block; width: 16px; height: 6px; border-radius: 3px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+  .note { background: var(--note-bg); border-radius: 8px; padding: 10px 12px; }
+  .note h2 { margin: 0 0 2px; font-size: 1rem; }
+  .note p { margin: 0; max-width: 85ch; }
+  footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 95ch; }
+  footer p { margin: 0 0 4px; }
+  @media (max-width: 600px) { .page { padding-inline: 16px; } .controls { padding: 8px 10px; } button { padding: 6px 10px; } }
+  /* film mode: only the stage, full frame */
+  body.film { background: var(--cytoplasm); }
+  body.film .page { max-width: none; padding: 0; }
+  body.film header, body.film .controls, body.film .readout, body.film .legend, body.film .note, body.film footer { display: none; }
+  body.film .stage { border: 0; border-radius: 0; padding: 0; }
+  body.film canvas { width: 100vw; height: 56.25vw; border-radius: 0; }
+</style>
+
+<div class="page">
+  <header>
+    <h1>Aktin am Lamellipodium</h1>
+    <p class="lede">Aufsicht auf die Vorderkante einer kriechenden Zelle. An den Plus-Enden lagert sich ATP-Aktin an und schiebt die Membran nach vorne. Hinten im Netz zerfallen die gealterten ADP-Filamente; die Monomere kehren in den Pool zurück und werden wieder vorne eingebaut.</p>
+  </header>
+
+  <section class="controls" aria-label="Steuerung">
+    <div class="buttons">
+      <button id="play" class="primary" type="button">Pause</button>
+      <button id="reset" type="button">Neu starten</button>
+    </div>
+    <label class="speed" for="speed">Tempo <input id="speed" type="range" min="1" max="8" step="1" value="3"></label>
+    <fieldset>
+      <legend>Proteine</legend>
+      <label><input id="arp23" type="checkbox" checked> Arp2/3 (Verzweigung)</label>
+      <label><input id="capping" type="checkbox" checked> Capping-Protein</label>
+      <label><input id="cofilin" type="checkbox" checked> Cofilin</label>
+    </fieldset>
+    <fieldset>
+      <legend>Wirkstoffe</legend>
+      <label><input id="latrunculin" type="checkbox"> Latrunculin</label>
+      <label><input id="phalloidin" type="checkbox"> Phalloidin</label>
+    </fieldset>
+  </section>
+
+  <section class="stage" aria-label="Lamellipodium">
+    <canvas id="stage" role="img" aria-label="Aktinnetz hinter der Plasmamembran an der Vorderkante der Zelle"></canvas>
+    <div class="readout" id="readout"></div>
+    <div class="legend">
+      <span style="--c: var(--atp)">ATP-Aktin</span>
+      <span style="--c: var(--adppi)">ADP-Pi-Aktin</span>
+      <span style="--c: var(--adp)">ADP-Aktin</span>
+      <span style="--c: var(--arp)">Arp2/3 an der Verzweigung</span>
+      <span style="--c: var(--capping)">Capping-Protein am Plus-Ende</span>
+      <span style="--c: var(--membrane)">Plasmamembran</span>
+    </div>
+    <div class="note" aria-live="polite"><h2 id="note-title"></h2><p id="note-text"></p></div>
+  </section>
+
+  <footer>
+    <p>Schematisch und stark beschleunigt: die Reihenfolge der Ereignisse stimmt, ihre Geschwindigkeit nicht. In der Zelle wird ATP etwa 2 s nach dem Einbau hydrolysiert, Phosphat wird erst nach Minuten frei (Halbwertszeit etwa 350 s); Fischkeratozyten kriechen mit etwa 10 µm/min.</p>
+    <p>Werte: Verzweigungswinkel 70° (Mullins et al. 1998), Untereinheit 2.7 nm, kritische Konzentration Plus-Ende 0.12 µM, Minus-Ende 0.6 µM (Pollard 1986), Pollard &amp; Borisy 2003.</p>
+  </footer>
+</div>
+
+<script>
+/* APP_SCRIPT */
+</script>

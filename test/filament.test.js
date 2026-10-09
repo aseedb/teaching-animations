@@ -139,6 +139,24 @@ describe("FilamentSpecification", () => {
     assert.ok(Math.abs(branch.pointedEnd().x - p.x) < 1e-9 && Math.abs(branch.pointedEnd().y - p.y) < 1e-9);
   });
 
+  test("ShouldStopTheRearPieceOfASeveredFilamentWithoutCappingProtein", () => {
+    // GIVEN
+    const f = filamentOf(Array(10).fill("ADP"));
+    // WHEN
+    const rear = f.severBefore(anyInt(1, 9));
+    // THEN
+    assert.deepEqual([rear.isCapped(), rear.hasCappingProtein()], [true, false]);
+  });
+
+  test("ShouldCarryCappingProteinWhenCapped", () => {
+    // GIVEN
+    const f = filamentOf(["ATP"]);
+    // WHEN
+    f.cap();
+    // THEN
+    assert.equal(f.hasCappingProtein(), true);
+  });
+
   test("ShouldNotGrowOnceCapped", () => {
     // GIVEN
     const f = filamentOf(["ATP"]);

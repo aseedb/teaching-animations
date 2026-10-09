@@ -20,12 +20,12 @@ export const RATES = Object.freeze({
 });
 
 const REFERENCE_POOL = 2000;
-const INITIAL_POOL = 2500;
+const INITIAL_POOL = 7000;
 const INITIAL_FILAMENTS = 14;
 const INITIAL_LENGTH = 25;
 const NETWORK_DEPTH_NM = 700;
 export const HALF_HEIGHT_NM = 180; // the band is periodic: a wider leading edge
-const MAX_FILAMENTS = 160;
+const MAX_FILAMENTS = 320;
 const DEG = Math.PI / 180;
 
 export class Lamellipodium {

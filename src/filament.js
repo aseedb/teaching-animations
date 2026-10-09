@@ -12,6 +12,7 @@ export class Filament {
   #states = [];
   #capped = false;
   #branch = false;
+  #cappingProtein = false;
 
   constructor(pointed, angle) {
     this.#pointed = { ...pointed };
@@ -69,8 +70,13 @@ export class Filament {
     this.#pointed = { x: this.#pointed.x, y: this.#pointed.y + dy };
   }
 
+  hasCappingProtein() {
+    return this.#cappingProtein;
+  }
+
   cap() {
     this.#capped = true;
+    this.#cappingProtein = true;
   }
 
   age(random, rates) {
@@ -89,7 +95,7 @@ export class Filament {
   severBefore(at) {
     const rear = new Filament(this.#pointed, this.#angle);
     this.#states.slice(0, at).forEach((s) => rear.addAtBarbedEnd(s));
-    rear.cap();
+    rear.#capped = true; // the severed rear piece does not regrow in this model
     this.#pointed = this.#along(at * SUBUNIT_NM);
     this.#states = this.#states.slice(at);
     return rear;
