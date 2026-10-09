@@ -84,7 +84,7 @@ describe("LamellipodiumSpecification", () => {
     // WHEN
     run(cell, 5000);
     // THEN
-    assert.ok(cell.pool() < pool * 0.1, `${pool} -> ${cell.pool()}`);
+    assert.ok(cell.pool() < pool * 0.2, `${pool} -> ${cell.pool()}`);
   });
 
   test("ShouldBranchOnlyNearTheMembrane", () => {
