@@ -266,7 +266,10 @@ function tick(time) {
   requestAnimationFrame(tick);
 }
 
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
 function playTo(target) {
+  if (reducedMotion.matches) { state.target = null; state.length = target; render(); return; }
   const wasIdle = state.target === null;
   state.target = target;
   if (wasIdle) requestAnimationFrame(tick);
