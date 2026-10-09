@@ -1,0 +1,9 @@
+{
+  "name": "mikrotubuli-instabilitaet",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  }
+}
