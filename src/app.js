@@ -10,6 +10,8 @@ const ZOOM_DIMERS = 60; // dimers shown behind the plus end in the zoom band
 const PEEL_DIMERS = 7; // curled dimers per protofilament while shrinking
 const HISTORY = 2400; // steps kept in the length plot
 const FILM = location.hash === "#film";
+const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per frame, from very slow to fast
+let pending = 0;
 
 const NOTES = {
   growing: ["Wachstum", "GTP-Tubulin lagert sich am Plus-Ende an. Hinter der Spitze wird das GTP hydrolysiert; vorne bleibt eine kurze GTP-Kappe, die das Gitter zusammenhält."],
@@ -195,7 +197,12 @@ function updateReadout() {
 }
 
 function frame() {
-  if (playing) { advance(Number($("speed").value)); updateReadout(); }
+  if (playing) {
+    pending += SPEEDS[Number($("speed").value)];
+    const steps = Math.floor(pending);
+    pending -= steps;
+    if (steps) { advance(steps); updateReadout(); }
+  }
   draw();
   requestAnimationFrame(frame);
 }
@@ -204,7 +211,14 @@ $("tubulin").addEventListener("input", (e) => { $("tubulin-out").textContent = `
 $("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Weiter"; });
 $("reset").addEventListener("click", () => { reset(); updateReadout(); draw(); });
 window.addEventListener("resize", draw);
-if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 1;
+function showSpeed() {
+  const perSecond = SPEEDS[Number($("speed").value)] * 60;
+  $("speed-out").textContent = perSecond < 10 ? `${perSecond.toFixed(perSecond < 2 ? 1 : 0)} Schritte/s` : `${Math.round(perSecond)} Schritte/s`;
+}
+$("speed").addEventListener("input", showSpeed);
+$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Weiter"; advance(1); updateReadout(); draw(); });
+if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
+showSpeed();
 
 if (FILM) document.body.classList.add("film");
 window.film = {

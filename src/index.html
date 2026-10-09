@@ -106,15 +106,16 @@
   <section class="controls" aria-label="Steuerung">
     <div class="buttons">
       <button id="play" class="primary" type="button">Pause</button>
+      <button id="step" type="button">Einzelschritt</button>
       <button id="reset" type="button">Neu starten</button>
     </div>
     <div class="slider">
       <div class="slider-label"><label for="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
       <input id="tubulin" type="range" min="5" max="20" step="1" value="10">
     </div>
-    <div class="slider" style="flex: 0 1 160px">
-      <div class="slider-label"><label for="speed">Tempo</label></div>
-      <input id="speed" type="range" min="1" max="4" step="1" value="2">
+    <div class="slider" style="flex: 0 1 220px">
+      <div class="slider-label"><label for="speed">Tempo</label><output id="speed-out" for="speed"></output></div>
+      <input id="speed" type="range" min="0" max="7" step="1" value="6">
     </div>
   </section>
 
