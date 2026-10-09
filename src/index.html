@@ -1,0 +1,134 @@
+<title>Dynamische Instabilität</title>
+<meta name="description" content="Ein Mikrotubulus wächst und schrumpft: GTP-Kappe, Katastrophe und Rettung, mit wählbarer Tubulin-Konzentration.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* layout: one 16:9 stage (also the film frame) with three bands: whole microtubule, plus-end zoom, length over time */
+  :root {
+    --ground: #f3f6f4;
+    --surface: #ffffff;
+    --ink: #1c2421;
+    --ink-soft: #56625c;
+    --rule: #d6ddd9;
+    --stage: #fbfcfb;
+    --gtp: #2bb673;
+    --gdp: #3a5a8c;
+    --catastrophe: #d1495b;
+    --rescue: #e8a33d;
+    --centrosome: #6d4aa8;
+    --edge: #8a948f;
+    --accent: #1f7a5a;
+    --accent-ink: #ffffff;
+    --note-bg: #e7f2ec;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #111614;
+      --surface: #1a201d;
+      --ink: #eaf0ec;
+      --ink-soft: #a3aea8;
+      --rule: #2d3632;
+      --stage: #121815;
+      --gtp: #5fe0a2;
+      --gdp: #7fa3dc;
+      --catastrophe: #ff7a8a;
+      --rescue: #ffc46b;
+      --centrosome: #b49bff;
+      --edge: #7f8984;
+      --accent: #5fe0a2;
+      --accent-ink: #0e1411;
+      --note-bg: #1a2c24;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #111614;
+    --surface: #1a201d;
+    --ink: #eaf0ec;
+    --ink-soft: #a3aea8;
+    --rule: #2d3632;
+    --stage: #121815;
+    --gtp: #5fe0a2;
+    --gdp: #7fa3dc;
+    --catastrophe: #ff7a8a;
+    --rescue: #ffc46b;
+    --centrosome: #b49bff;
+    --edge: #7f8984;
+    --accent: #5fe0a2;
+    --accent-ink: #0e1411;
+    --note-bg: #1a2c24;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
+  .page { max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
+  .page > * { min-width: 0; }
+  header { display: grid; gap: 6px; }
+  h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.3rem); line-height: 1.1; text-wrap: balance; }
+  .lede { margin: 0; color: var(--ink-soft); max-width: 75ch; }
+  .controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; line-height: 1.2; border-radius: 7px; padding: 8px 14px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 7rem; }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--rescue); outline-offset: 2px; }
+  .slider { display: grid; gap: 2px; flex: 1 1 240px; min-width: 0; font-size: 0.95rem; }
+  .slider-label { display: flex; justify-content: space-between; gap: 8px; }
+  .slider output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
+  canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: var(--stage); }
+  .readout { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; color: var(--ink-soft); }
+  .readout b { color: var(--ink); font-weight: 500; }
+  .chip { font-family: var(--font-body); font-weight: 700; font-size: 0.85rem; border-radius: 999px; padding: 2px 10px; color: var(--accent-ink); background: var(--gtp); }
+  .chip[data-phase="shrinking"] { background: var(--catastrophe); }
+  .note { background: var(--note-bg); border-radius: 8px; padding: 10px 12px; }
+  .note h2 { margin: 0 0 2px; font-size: 1rem; }
+  .note p { margin: 0; max-width: 85ch; }
+  footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 95ch; }
+  footer p { margin: 0 0 4px; }
+  @media (max-width: 600px) { .page { padding-inline: 16px; } .controls { padding: 8px 10px; } button { padding: 6px 10px; } }
+  body.film { background: var(--stage); }
+  body.film .page { max-width: none; padding: 0; }
+  body.film header, body.film .controls, body.film .readout, body.film .note, body.film footer { display: none; }
+  body.film .stage { border: 0; border-radius: 0; padding: 0; }
+  body.film canvas { width: 100vw; height: 56.25vw; border-radius: 0; }
+</style>
+
+<div class="page">
+  <header>
+    <h1>Dynamische Instabilität</h1>
+    <p class="lede">Ein Mikrotubulus wächst vom Zentrosom zum Zellrand. An das Plus-Ende lagert sich GTP-Tubulin an; erst im Gitter wird das GTP hydrolysiert. Solange vorne eine GTP-Kappe bleibt, wächst er. Geht sie verloren, spreizen sich die Protofilamente ab und der Mikrotubulus schrumpft rasch: Katastrophe. Wird das Schrumpfen gestoppt und beginnt er wieder zu wachsen: Rettung.</p>
+  </header>
+
+  <section class="controls" aria-label="Steuerung">
+    <div class="buttons">
+      <button id="play" class="primary" type="button">Pause</button>
+      <button id="reset" type="button">Neu starten</button>
+    </div>
+    <div class="slider">
+      <div class="slider-label"><label for="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
+      <input id="tubulin" type="range" min="5" max="20" step="1" value="10">
+    </div>
+    <div class="slider" style="flex: 0 1 160px">
+      <div class="slider-label"><label for="speed">Tempo</label></div>
+      <input id="speed" type="range" min="1" max="4" step="1" value="2">
+    </div>
+  </section>
+
+  <section class="stage" aria-label="Mikrotubulus">
+    <canvas id="stage" role="img" aria-label="Mikrotubulus mit GTP-Kappe, Ansicht des Plus-Endes und Länge über die Zeit"></canvas>
+    <div class="readout" id="readout"></div>
+    <div class="note" aria-live="polite"><h2 id="note-title"></h2><p id="note-text"></p></div>
+  </section>
+
+  <footer>
+    <p>Schematisch und beschleunigt: die Abfolge stimmt, die Zeitskala nicht. Gezeigt sind 13 Protofilamente aus αβ-Tubulin-Dimeren von 8 nm; das Schrumpfen ist etwa zehnmal schneller als das Wachsen. Mehr freies Tubulin: längere GTP-Kappe, seltenere Katastrophen.</p>
+  </footer>
+</div>
+
+<script>
+/* APP_SCRIPT */
+</script>

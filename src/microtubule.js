@@ -8,6 +8,7 @@ import { Protofilament } from "./protofilament.js";
 export const PROTOFILAMENTS = 13;
 export const SEED_DIMERS = 20;
 export const CELL_EDGE_DIMERS = 1000; // 8 µm: the plus end meets the cell cortex
+export const LATERAL_SLACK_DIMERS = 3; // lateral bonds keep protofilaments within a few dimers of the mean
 
 export const RATES = Object.freeze({
   onPerMicromolar: 0.03, // per protofilament and step, per µM free tubulin
@@ -103,9 +104,13 @@ export class Microtubule {
   #grow() {
     this.#stepsGrowing += 1;
     const pOn = Math.min(1, this.#rates.onPerMicromolar * this.#tubulin);
+    const mean = this.#meanDimers();
     for (const p of this.#protofilaments) {
-      if (p.dimerCount() < CELL_EDGE_DIMERS && this.#random.chance(pOn)) p.grow();
-      else if (p.dimerCount() > SEED_DIMERS && this.#random.chance(this.#tipLoss(p))) p.shrink();
+      const leading = p.dimerCount() >= mean + LATERAL_SLACK_DIMERS;
+      const lagging = p.dimerCount() <= mean - LATERAL_SLACK_DIMERS;
+      const pGrow = lagging ? Math.min(1, 3 * pOn) : pOn; // a corner site between two neighbours binds tubulin readily
+      if (!leading && p.dimerCount() < CELL_EDGE_DIMERS && this.#random.chance(pGrow)) p.grow();
+      else if (!lagging && p.dimerCount() > SEED_DIMERS && this.#random.chance(this.#tipLoss(p))) p.shrink();
       p.hydrolyse(this.#random, this.#rates.hydrolysis);
     }
     const exposed = this.#protofilaments.filter((p) => p.tipState() === "GDP" && p.dimerCount() > SEED_DIMERS).length;
@@ -124,9 +129,11 @@ export class Microtubule {
       this.#protofilaments.forEach((p) => p.grow()); // GTP-tubulin binds: a new, short cap
       return;
     }
-    for (const p of this.#protofilaments) {
-      for (let k = 0; k < this.#rates.shrinkage; k++) {
-        if (p.dimerCount() > SEED_DIMERS && this.#random.chance(this.#rates.shrinkageChance)) p.shrink();
+    for (let k = 0; k < this.#rates.shrinkage; k++) {
+      const mean = this.#meanDimers();
+      for (const p of this.#protofilaments) {
+        const lagging = p.dimerCount() <= mean - LATERAL_SLACK_DIMERS;
+        if (!lagging && p.dimerCount() > SEED_DIMERS && this.#random.chance(this.#rates.shrinkageChance)) p.shrink();
       }
     }
     if (this.#protofilaments.every((p) => p.dimerCount() <= SEED_DIMERS)) this.#phase = "growing"; // regrowth from the seed
@@ -137,6 +144,10 @@ export class Microtubule {
     for (const p of this.#protofilaments) {
       while (p.tipState() === "GTP" && p.dimerCount() > SEED_DIMERS) p.shrink();
     }
+  }
+
+  #meanDimers() {
+    return this.#protofilaments.reduce((s, p) => s + p.dimerCount(), 0) / PROTOFILAMENTS;
   }
 
   #tipLoss(p) {

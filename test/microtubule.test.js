@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { Microtubule, PROTOFILAMENTS, SEED_DIMERS, CELL_EDGE_DIMERS } from "../src/microtubule.js";
+import { Microtubule, PROTOFILAMENTS, SEED_DIMERS, CELL_EDGE_DIMERS, LATERAL_SLACK_DIMERS } from "../src/microtubule.js";
 import { SeededRandom } from "../src/seededRandom.js";
 
 const anySeed = () => Math.floor(Math.random() * 2 ** 31);
@@ -148,6 +148,28 @@ describe("MicrotubuleSpecification", () => {
     run(mt, 8000);
     // THEN
     assert.ok(mt.catastrophes() >= 1);
+  });
+
+  test("ShouldKeepAnEstablishedGrowingEndWithinAFewDimers", () => {
+    // GIVEN
+    const mt = Microtubule.create(12, SeededRandom.of(anySeed()));
+    // WHEN
+    let widest = 0;
+    let growingFor = 0;
+    for (let i = 0; i < 3000; i++) {
+      mt.step();
+      growingFor = mt.phase() === "growing" ? growingFor + 1 : 0;
+      if (growingFor < 20) continue; // the ragged end left by shrinkage closes first
+      const lengths = mt.protofilaments().map((p) => p.length);
+      widest = Math.max(widest, Math.max(...lengths) - Math.min(...lengths));
+    }
+    // THEN
+    assert.ok(widest <= 2 * LATERAL_SLACK_DIMERS + 2, `${widest}`);
+  });
+
+  test("ShouldAllowEachProtofilamentToLeadByAFewDimers", () => {
+    // GIVEN / WHEN / THEN
+    assert.equal(LATERAL_SLACK_DIMERS, 3);
   });
 
   test("ShouldHaveThirteenProtofilaments", () => {
