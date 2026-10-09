@@ -52,6 +52,22 @@ export class Sarcomere {
     return Sarcomere.of(this.#species, thickMeetsZ).#crossBridgeForce() * this.#contracture();
   }
 
+  // Positions along the fibre axis in µm, M line at 0.
+  layout() {
+    const { thick, thinFromZ, bareZone, zDisc } = this.#species.filaments();
+    const half = this.#length / 2;
+    const thickHalf = Math.min(thick, this.#length - zDisc) / 2;
+    const boundStart = Math.max(half - thinFromZ, bareZone / 2);
+    const boundEnd = Math.min(half, thickHalf);
+    const bound = boundEnd > boundStart ? [[-boundEnd, -boundStart], [boundStart, boundEnd]] : [];
+    return {
+      zDiscs: [-half, half],
+      thin: [[-half, -half + thinFromZ], [half - thinFromZ, half]],
+      thickFilament: [-thickHalf, thickHalf],
+      boundHeads: bound,
+    };
+  }
+
   region() {
     return regionOf(this.#length, Sarcomere.landmarks(this.#species));
   }
