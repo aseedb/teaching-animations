@@ -140,6 +140,18 @@ describe("FilamentSpecification", () => {
     assert.deepEqual([grew, f.subunitCount()], [false, 1]);
   });
 
+  test("ShouldMoveAsAWholeWhenShiftedAcrossTheBand", () => {
+    // GIVEN
+    const f = filamentOf(Array(anyInt(1, 20)).fill("ATP"));
+    const [p, t] = [f.pointedEnd(), f.barbedTip()];
+    const dy = anyBetween(-400, 400);
+    // WHEN
+    f.shiftY(dy);
+    // THEN
+    const moved = [f.pointedEnd().y - p.y, f.barbedTip().y - t.y, f.barbedTip().x - t.x];
+    assert.ok(Math.abs(moved[0] - dy) < 1e-9 && Math.abs(moved[1] - dy) < 1e-9 && Math.abs(moved[2]) < 1e-9);
+  });
+
   test("ShouldUseTheSubunitRiseOfF-Actin", () => {
     // GIVEN / WHEN / THEN
     assert.equal(SUBUNIT_NM, 2.7);

@@ -60,6 +60,10 @@ export class Filament {
     return true;
   }
 
+  shiftY(dy) {
+    this.#pointed = { x: this.#pointed.x, y: this.#pointed.y + dy };
+  }
+
   cap() {
     this.#capped = true;
   }
