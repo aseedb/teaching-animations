@@ -13,14 +13,13 @@ const FILM = location.hash === "#film";
 
 const NOTES = {
   normal: ["Tretmühle", "Vorne wird ATP-Aktin eingebaut, das Netz altert nach hinten (ATP → ADP-Pi → ADP), Cofilin zerlegt die alten ADP-Filamente, und Profilin bringt die Monomere als ATP-Aktin wieder nach vorne."],
-  latrunculin: ["Latrunculin", "Latrunculin bindet die freien Monomere (1:1). Ohne Nachschub hört die Polymerisation auf: die Membran bleibt stehen, während hinten das Netz weiter zerfällt."],
-  phalloidin: ["Phalloidin", "Phalloidin stabilisiert die Filamente: sie zerfallen nicht mehr. Der Monomer-Pool wird aufgebraucht, und die Membran kommt allmählich zum Stillstand."],
   noArp: ["Ohne Arp2/3", "Ohne Verzweigung entstehen keine neuen Plus-Enden. Die vorhandenen werden nach und nach gekappt, und der Vorschub erlahmt."],
   noCapping: ["Ohne Capping-Protein", "Kein Plus-Ende wird gekappt: wenige lange Filamente wachsen weiter und verbrauchen die Monomere, statt dass das Netz dicht und kurz bleibt."],
   noCofilin: ["Ohne Cofilin", "Die alten Filamente zerfallen nur langsam am Minus-Ende: es kommen weniger Monomere in den Pool zurück, und der Vorschub wird langsamer."],
 };
 
 const $ = (id) => document.getElementById(id);
+const PROTEINS = ["arp23", "capping", "cofilin"];
 
 function palette() {
   const style = getComputedStyle(document.documentElement);
@@ -30,7 +29,7 @@ function palette() {
 const STATE_COLOR = { ATP: "atp", "ADP-Pi": "adppi", ADP: "adp" };
 
 function treatmentFromControls() {
-  return Object.fromEntries(["arp23", "capping", "cofilin", "latrunculin", "phalloidin"].map((k) => [k, $(k).checked]));
+  return { ...Object.fromEntries(PROTEINS.map((k) => [k, $(k).checked])), latrunculin: false, phalloidin: false };
 }
 
 let cell;
@@ -155,8 +154,6 @@ function drawFilmLegend(ctx, w, h, c, font) {
 }
 
 function noteKey(t) {
-  if (t.latrunculin) return "latrunculin";
-  if (t.phalloidin) return "phalloidin";
   if (!t.arp23) return "noArp";
   if (!t.capping) return "noCapping";
   if (!t.cofilin) return "noCofilin";
@@ -173,7 +170,6 @@ function updateReadout() {
   $("readout").innerHTML =
     `<span>Vorschub <b>${advance.toFixed(2)} nm/Schritt</b></span>` +
     `<span>freie Monomere <b>${cell.pool()}</b></span>` +
-    (cell.sequestered() ? `<span>durch Latrunculin gebunden <b>${cell.sequestered()}</b></span>` : "") +
     `<span>wachsende Plus-Enden <b>${growing}</b></span>`;
   const [title, text] = NOTES[noteKey(t)];
   $("note-title").textContent = title;
@@ -190,7 +186,7 @@ function frame() {
   if (!FILM) requestAnimationFrame(frame);
 }
 
-for (const id of ["arp23", "capping", "cofilin", "latrunculin", "phalloidin"]) {
+for (const id of PROTEINS) {
   $(id).addEventListener("change", () => { cell.treat(treatmentFromControls()); updateReadout(); });
 }
 $("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Weiter"; });
