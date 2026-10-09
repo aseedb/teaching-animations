@@ -82,6 +82,17 @@ describe("ActinSceneSpecification", () => {
     assert.ok(Number.isFinite(scene.severSinceMark().at.x));
   });
 
+  test("ShouldRememberBothPiecesOfTheFirstSevering", () => {
+    // GIVEN
+    const scene = Scene.empty();
+    scene.reset(anySeed(), 300, ALL_ON);
+    scene.mark();
+    // WHEN
+    scene.runUntil((s) => s.severSinceMark() !== null, 3000);
+    // THEN
+    assert.deepEqual(scene.severSinceMark().pieces?.map((f) => f.subunitCount() > 0), [true, true]);
+  });
+
   test("ShouldIgnoreEventsDuringTheLeadIn", () => {
     // GIVEN
     const scene = Scene.empty();

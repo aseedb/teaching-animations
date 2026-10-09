@@ -30,7 +30,7 @@ export class Scene {
     this.#births = new Map();
     this.#cell.onBranch((f) => this.#onBranch(f));
     this.#cell.onCap((f) => { if (!this.#cap && this.#counts()) this.#cap = { filament: f, step: this.#steps }; });
-    this.#cell.onSever((at) => { if (!this.#sever && this.#counts()) this.#sever = { at, step: this.#steps }; });
+    this.#cell.onSever((at, front, rear) => { if (!this.#sever && this.#counts()) this.#sever = { at, pieces: [front, rear], step: this.#steps }; });
     this.advance(warmUp);
     this.mark();
   }
