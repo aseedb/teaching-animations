@@ -184,7 +184,11 @@ function drawCurve(canvas, species, length, opts) {
   const c = opts.colors;
   const pad = { l: 46, r: 14, t: 14, b: 38 };
   const X = (um) => pad.l + ((um - MIN_LENGTH) / (MAX_LENGTH - MIN_LENGTH)) * (w - pad.l - pad.r);
-  const Y = (f) => h - pad.b - (f / 1.25) * (h - pad.t - pad.b);
+  const showPassive = opts.titin && species.titinOnset() !== null;
+  // the axis grows with the titin curve so that it is never clipped
+  const peak = showPassive ? Sarcomere.of(species, MAX_LENGTH).passiveTension() : 0;
+  const yMax = Math.max(1.25, Math.ceil(peak * 4) / 4 + 0.05);
+  const Y = (f) => h - pad.b - (f / yMax) * (h - pad.t - pad.b);
   ctx.font = `12px ${getComputedStyle(document.body).fontFamily}`;
 
   // grid and axes
@@ -192,9 +196,9 @@ function drawCurve(canvas, species, length, opts) {
   ctx.fillStyle = c["ink-soft"];
   ctx.lineWidth = 1;
   ctx.textAlign = "right";
-  for (const f of [0, 0.5, 1]) {
+  for (let f = 0; f <= yMax; f += 0.5) {
     ctx.beginPath(); ctx.moveTo(pad.l, Y(f)); ctx.lineTo(w - pad.r, Y(f)); ctx.stroke();
-    ctx.fillText(`${f * 100} %`, pad.l - 6, Y(f) + 4);
+    ctx.fillText(`${Math.round(f * 100)} %`, pad.l - 6, Y(f) + 4);
   }
   ctx.textAlign = "center";
   for (let um = 1.5; um <= MAX_LENGTH; um += 0.5) {
@@ -212,14 +216,13 @@ function drawCurve(canvas, species, length, opts) {
     ctx.beginPath();
     for (let i = 0; i <= samples; i++) {
       const um = MIN_LENGTH + ((MAX_LENGTH - MIN_LENGTH) * i) / samples;
-      const v = Math.min(1.25, fn(Sarcomere.of(species, um)));
+      const v = fn(Sarcomere.of(species, um));
       i ? ctx.lineTo(X(um), Y(v)) : ctx.moveTo(X(um), Y(v));
     }
     ctx.stroke();
     ctx.setLineDash([]);
   };
   trace((s) => s.activeForce(), c.curve, []);
-  const showPassive = opts.titin && species.titinOnset() !== null;
   if (showPassive) trace((s) => s.passiveTension(), c.passive, [6, 4]);
 
   // current point
@@ -230,7 +233,7 @@ function drawCurve(canvas, species, length, opts) {
   ctx.setLineDash([]);
   const dot = (v, color) => {
     ctx.fillStyle = color;
-    ctx.beginPath(); ctx.arc(X(length), Y(Math.min(1.25, v)), 6, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(X(length), Y(v), 6, 0, Math.PI * 2); ctx.fill();
   };
   dot(now.activeForce(), c.curve);
   if (showPassive) dot(now.passiveTension(), c.passive);
