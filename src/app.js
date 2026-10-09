@@ -132,6 +132,61 @@ function outline(ctx, c, f, X, Y, width) {
   }
 }
 
+// outlines first, then the filaments, then their marks, so no mark is hidden by its own group
+function drawGroup(ctx, c, { filaments, alpha, outlined = false }, look) {
+  if (outlined) filaments.forEach((f) => outline(ctx, c, f, look.X, look.Y, look.lineWidth * 2.2));
+  ctx.globalAlpha = alpha;
+  filaments.forEach((f) => drawBody(ctx, c, f, look));
+  filaments.forEach((f) => drawMarks(ctx, c, f, look, alpha));
+}
+
+// one stroke per run of subunits in the same state, edge to edge
+function drawBody(ctx, c, f, { X, Y, lineWidth, inset }) {
+  ctx.lineWidth = lineWidth;
+  for (const dy of [-BAND, 0, BAND]) {
+    for (const r of runsOf(f)) {
+      const a = f.subunitPosition(r.from - 0.5 + inset);
+      const b = f.subunitPosition(r.to + 0.5 - inset);
+      ctx.strokeStyle = c[STATE_COLOR[r.state]];
+      ctx.beginPath(); ctx.moveTo(X(a.x), Y(a.y + dy)); ctx.lineTo(X(b.x) + 0.01, Y(b.y + dy)); ctx.stroke();
+    }
+  }
+}
+
+// Arp2/3 at a branch's pointed end (with a pulse when new), the growing plus end, capping protein
+function drawMarks(ctx, c, f, { X, Y, marker }, alpha) {
+  if (!f.subunitCount()) return;
+  for (const dy of [-BAND, 0, BAND]) {
+    if (f.isBranch()) drawArp23(ctx, c, f, X, Y, dy, marker, alpha);
+    const t = f.barbedTip();
+    if (!f.isCapped()) {
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = c.ink;
+      ctx.lineWidth = Math.max(1, 0.6 * marker);
+      ctx.beginPath(); ctx.arc(X(t.x), Y(t.y + dy), Math.max(2.5, 2.1 * marker), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    if (f.hasCappingProtein()) {
+      ctx.fillStyle = c.capping;
+      const s = Math.max(3, 2.6 * marker);
+      ctx.fillRect(X(t.x) - s / 2, Y(t.y + dy) - s / 2, s, s);
+    }
+  }
+}
+
+function drawArp23(ctx, c, f, X, Y, dy, marker, alpha) {
+  const p = f.pointedEnd();
+  ctx.fillStyle = c.arp;
+  ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), Math.max(2.5, 2.2 * marker), 0, Math.PI * 2); ctx.fill();
+  const k = scene.pulseOf(f);
+  if (k === null) return;
+  // a new branch: a new plus end is born
+  ctx.strokeStyle = c.arp;
+  ctx.globalAlpha = alpha * (1 - k);
+  ctx.lineWidth = Math.max(1.5, 1.2 * marker);
+  ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), (3 + 10 * k) * marker, 0, Math.PI * 2); ctx.stroke();
+  ctx.globalAlpha = alpha;
+}
+
 // the network (and the membrane) in a given mapping and clip; `near` limits the filaments drawn
 function drawNetwork(ctx, c, { X, Y, scale, clip, membraneX, near = null, focus = null, lineScale = scale }) {
   const cell = scene.cell();
@@ -140,57 +195,15 @@ function drawNetwork(ctx, c, { X, Y, scale, clip, membraneX, near = null, focus 
   ctx.beginPath(); ctx.rect(clip.x, clip.y, clip.w, clip.h); ctx.clip();
   ctx.lineCap = "round";
   const lineWidth = Math.max(1.6, SUBUNIT_NM * 0.9 * lineScale);
-  ctx.lineWidth = lineWidth;
-  const marker = lineScale; // size of plus-end, Arp2/3 and capping marks
-  // focused filaments come last, on top, with a light outline
-  const ordered = focus ? [...cell.filaments().filter((f) => !focus.has(f)), ...focus] : cell.filaments();
-  for (const f of ordered) {
-    if (near && !near(f) && !(focus && focus.has(f))) continue;
-    if (focus && focus.has(f)) outline(ctx, c, f, X, Y, lineWidth * 2.2);
-    ctx.globalAlpha = focus && !focus.has(f) ? 0.18 : 1;
-    const states = f.states();
-    for (const dy of [-BAND, 0, BAND]) {
-      let i = 0;
-      while (i < states.length) {
-        let j = i;
-        while (j + 1 < states.length && states[j + 1] === states[i]) j++;
-        const a = f.subunitPosition(i);
-        const b = f.subunitPosition(j);
-        ctx.strokeStyle = c[STATE_COLOR[states[i]]];
-        ctx.beginPath(); ctx.moveTo(X(a.x), Y(a.y + dy)); ctx.lineTo(X(b.x) + 0.01, Y(b.y + dy)); ctx.stroke();
-        i = j + 1;
-      }
-      if (f.isBranch()) {
-        const p = f.pointedEnd();
-        ctx.fillStyle = c.arp;
-        ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), Math.max(2.5, 2.2 * marker), 0, Math.PI * 2); ctx.fill();
-        const k = scene.pulseOf(f);
-        if (k !== null) {
-          // a new branch: a new plus end is born
-          ctx.strokeStyle = c.arp;
-          ctx.globalAlpha = 1 - k;
-          ctx.lineWidth = Math.max(1.5, 1.2 * marker);
-          ctx.beginPath(); ctx.arc(X(p.x), Y(p.y + dy), (3 + 10 * k) * marker, 0, Math.PI * 2); ctx.stroke();
-          ctx.globalAlpha = focus && !focus.has(f) ? 0.18 : 1;
-          ctx.lineWidth = lineWidth;
-        }
-      }
-      if (!f.isCapped() && states.length) {
-        const t = f.barbedTip();
-        ctx.fillStyle = "#ffffff";
-        ctx.strokeStyle = c.ink;
-        ctx.lineWidth = Math.max(1, 0.6 * marker);
-        ctx.beginPath(); ctx.arc(X(t.x), Y(t.y + dy), Math.max(2.5, 2.1 * marker), 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-        ctx.lineWidth = lineWidth;
-      }
-      if (f.hasCappingProtein() && states.length) {
-        const t = f.barbedTip();
-        ctx.fillStyle = c.capping;
-        const s = Math.max(3, 2.6 * marker);
-        ctx.fillRect(X(t.x) - s / 2, Y(t.y + dy) - s / 2, s, s);
-      }
-    }
-  }
+  const look = {
+    X, Y, lineWidth,
+    marker: lineScale, // size of plus-end, Arp2/3 and capping marks
+    inset: Math.min(0.5, lineWidth / 2 / (SUBUNIT_NM * scale)), // round caps end at the subunit's edge
+  };
+  const shown = cell.filaments().filter((f) => !near || near(f) || (focus && focus.has(f)));
+  // focused filaments come last, on top, outlined and with their marks above them
+  const groups = focus ? [{ filaments: shown.filter((f) => !focus.has(f)), alpha: 0.18 }, { filaments: [...focus], alpha: 1, outlined: true }] : [{ filaments: shown, alpha: 1 }];
+  for (const group of groups) drawGroup(ctx, c, group, look);
   ctx.globalAlpha = 1;
   ctx.restore();
 
@@ -203,40 +216,60 @@ function drawNetwork(ctx, c, { X, Y, scale, clip, membraneX, near = null, focus 
 
 // ---- what the tour points at -----------------------------------------------
 
-function subunitNear(state, depthNm) {
+// consecutive subunits in the same nucleotide state
+function runsOf(f) {
+  const states = f.states();
+  const runs = [];
+  let from = 0;
+  for (let i = 1; i <= states.length; i++) if (i === states.length || states[i] !== states[from]) { runs.push({ state: states[from], from, to: i - 1 }); from = i; }
+  return runs;
+}
+
+// the middle of a run of `state` (at least minRun long) at the given quantile
+// of such runs' depths, preferring the given height
+function runTarget(state, minRun, quantile, yNm) {
   const cell = scene.cell();
   const m = cell.membraneX();
-  let best = null;
-  for (const f of cell.filaments()) {
-    f.states().forEach((s, i) => {
-      if (s !== state) return;
-      const p = f.subunitPosition(i);
-      const y = intoBand(p.y);
-      if (Math.abs(y) > HALF_HEIGHT_NM * 0.7) return;
-      const score = Math.abs(m - p.x - depthNm) + Math.abs(y) * 0.5;
-      if (!best || score < best.score) best = { x: p.x, y, score };
-    });
-  }
-  return best;
+  const centres = cell.filaments().flatMap((f) => runsOf(f).filter((r) => r.state === state && r.to - r.from + 1 >= minRun).map((r) => f.subunitPosition((r.from + r.to) / 2)));
+  if (!centres.length) return null;
+  const depths = centres.map((p) => m - p.x).sort((a, b) => a - b);
+  const depth = depths[Math.floor(quantile * (depths.length - 1))];
+  const score = (p) => Math.abs(m - p.x - depth) + Math.abs(intoBand(p.y) - yNm) * 0.5;
+  return centres.reduce((best, p) => (score(p) < score(best) ? p : best));
+}
+
+// the plus end an arrow follows: chosen once per step, kept while it grows
+const FRONT_TIP_DEPTH_NM = 25;
+const FRONT_TIP_HEIGHT = 0.55; // of the half height: upper part of the view
+const FRONT_TIP_MIN_SUBUNITS = 10;
+let pinned = { key: null, filament: null };
+function frontPlusEnd() {
+  const cell = scene.cell();
+  const key = tour?.index() ?? null;
+  const kept = pinned.filament;
+  if (pinned.key === key && kept && !kept.isCapped() && cell.filaments().includes(kept)) return kept.barbedTip();
+  const m = cell.membraneX();
+  const score = (f) => Math.abs(intoBand(f.barbedTip().y) - HALF_HEIGHT_NM * FRONT_TIP_HEIGHT) * 0.5 + Math.abs(m - f.barbedTip().x - FRONT_TIP_DEPTH_NM) * 2;
+  const growing = cell.filaments().filter((f) => !f.isCapped() && f.subunitCount() >= FRONT_TIP_MIN_SUBUNITS && scene.pulseOf(f) === null);
+  pinned = { key, filament: growing.reduce((best, f) => (!best || score(f) < score(best) ? f : best), null) };
+  return pinned.filament?.barbedTip() ?? null;
 }
 
 function resolveTargets({ X, Y, m, scale, h, font }) {
   const cell = scene.cell();
   const t = {};
   const point = (p, r) => (p ? { x: X(p.x), y: Y(intoBand(p.y)), r } : null);
-  t.membrane = { x: X(m) + 2, y: h / 2, rx: font * 1.4, ry: h * 0.42 };
-  t.membranePush = { x: X(m) + 4, y: h * 0.3, r: font };
+  t.membrane = { x: X(m) + font, y: h / 2, rx: font * 1.4, ry: h * 0.42 }; // the membrane and its label
+  t.membranePush = { x: X(m) + 4, y: h * 0.3, r: 2 };
   // the rear of the network: where its deepest fifth of subunits lies
   const depths = cell.filaments().flatMap((f) => f.states().map((_, i) => m - f.subunitPosition(i).x)).sort((a, b) => a - b);
   const q = (p) => depths[Math.min(depths.length - 1, Math.floor(p * depths.length))] ?? 0;
   t.rearNetwork = { x: X(m - q(0.88)), y: h / 2, rx: Math.max(40, (q(0.97) - q(0.75)) / 2) * scale, ry: h * 0.3 };
-  t.front = { x: X(m - 50), y: h / 2, rx: 60 * scale, ry: h * 0.4 };
-  const tips = cell.filaments().filter((f) => !f.isCapped() && f.subunitCount()).map((f) => f.barbedTip());
-  const front = tips.map((p) => ({ x: p.x, y: intoBand(p.y) })).sort((a, b) => Math.abs(a.y) + (m - a.x) * 3 - (Math.abs(b.y) + (m - b.x) * 3))[0];
-  t.frontPlusEnd = point(front, font * 0.6);
-  t.ageATP = point(subunitNear("ATP", 15), font * 0.5);
-  t.ageADPPi = point(subunitNear("ADP-Pi", 130), font * 0.5);
-  t.ageADP = point(subunitNear("ADP", q(0.9)), font * 0.5);
+  t.front = { x: X(m - 40), y: h / 2, rx: 40 * scale, ry: h * 0.4 };
+  t.frontPlusEnd = point(frontPlusEnd(), font * 0.6);
+  t.ageATP = point(runTarget("ATP", 3, 0.5, HALF_HEIGHT_NM * 0.35), font * 0.5);
+  t.ageADPPi = point(runTarget("ADP-Pi", 5, 0.5, 0), font * 0.5);
+  t.ageADP = point(runTarget("ADP", 8, 0.25, -HALF_HEIGHT_NM * 0.35), font * 0.5);
   const branch = scene.branchSinceMark();
   if (branch) {
     const tip = branch.filament.barbedTip();
@@ -248,8 +281,8 @@ function resolveTargets({ X, Y, m, scale, h, font }) {
   const cap = scene.capSinceMark();
   if (cap) t.cappedTip = { ...point(cap.filament.barbedTip(), font * 1.2) };
   const sever = scene.severSinceMark();
-  if (sever) t.severPoint = point(sever.at, font * 1.2);
-  t.recycle = { x0: X(m - 400), x1: X(m - 40), y: h * 0.8 };
+  if (sever) t.severPoint = point(sever.pieces[1].barbedTip(), font * 1.2);
+  t.recycle = { x0: X(m - q(0.95)), x1: X(m - 40), y: h * 0.8 };
   return t;
 }
 
@@ -290,8 +323,9 @@ function worldPoints() {
     p.branchTip = { x: tip.x, y: tip.y + dy };
     const mother = motherOf(branch.filament);
     if (mother) {
-      // a point on the mother filament, a little behind the branch point
-      const k = Math.max(0, nearestSubunit(mother, base) - 8);
+      // a point on the mother filament, a little beyond the branch point (behind it if the mother ends there)
+      const at = nearestSubunit(mother, base);
+      const k = mother.subunitCount() - 1 - at >= 2 ? Math.min(mother.subunitCount() - 1, at + 3) : Math.max(0, at - 6);
       const q = mother.subunitPosition(k);
       p.mother = { x: q.x, y: q.y + (intoBand(base.y + dy) - base.y - dy) + dy + (base.y - (mother.subunitPosition(nearestSubunit(mother, base)).y)) };
     }
@@ -302,10 +336,11 @@ function worldPoints() {
   if (cap) { const t = cap.filament.barbedTip(); p.cappedTip = { x: t.x, y: intoBand(t.y) }; p.cap = p.cappedTip; p.capFocus = new Set([cap.filament]); }
   const sever = scene.severSinceMark();
   if (sever) {
-    p.severPoint = { x: sever.at.x, y: intoBand(sever.at.y) };
+    const cut = sever.pieces[1].barbedTip(); // the rear piece ends where the cut was
+    p.severPoint = { x: cut.x, y: intoBand(cut.y) };
     p.sever = p.severPoint;
-    const touching = scene.cell().filaments().filter((f) => f.subunitCount() && [f.pointedEnd(), f.barbedTip()].some((q) => Math.hypot(q.x - sever.at.x, q.y - sever.at.y) < SUBUNIT_NM * 1.5));
-    p.severFocus = new Set(touching);
+    p.severFocus = new Set(sever.pieces);
+    p.severPoint.angle = sever.pieces[0].angle();
   }
   return p;
 }
@@ -343,7 +378,7 @@ function drawLens(ctx, c, font, w, h, hl) {
   labelAt(ctx, c, font, `Lupe (${LENS_ZOOM}×)`, R.x + 8, R.y + font * 1.3, "left");
   // annotations inside the lens
   const local = {};
-  for (const [name, q] of Object.entries(world)) if (Number.isFinite(q?.x)) local[name] = { x: LX(q.x), y: LY(q.y), r: font * 0.9, inLens: R };
+  for (const [name, q] of Object.entries(world)) if (Number.isFinite(q?.x)) local[name] = { x: LX(q.x), y: LY(q.y), r: font * 0.9, inLens: R, angle: q.angle };
   ctx.save();
   ctx.beginPath(); ctx.rect(R.x, R.y, R.w, R.h); ctx.clip();
   drawHighlights(ctx, c, font, w, h, hl.notes ?? [], local);
@@ -382,6 +417,14 @@ function drawHighlights(ctx, c, font, w, h, highlights, map = targets) {
   drawHighlightPass(ctx, c, font, w, h, plain, Math.max(3, font / 4), true, map);
 }
 
+// where an arrow starts, relative to its target, in font sizes, and how its label sits there
+const ARROW_FROM = {
+  upperLeft: { dx: -7, dy: -3.5, align: "right", labelDy: -0.4 },
+  upperRight: { dx: 7, dy: -3.5, align: "left", labelDy: -0.4 },
+  above: { dx: 4, dy: -3.5, align: "center", labelDy: -0.4 },
+  lowerLeft: { dx: -7, dy: 1.5, align: "right", labelDy: 1.3 },
+};
+
 function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, map) {
   const stroke = () => { ctx.strokeStyle = c.highlight; ctx.lineWidth = width; };
   const label = (...args) => { if (withLabels) labelAt(ctx, c, font, ...args); };
@@ -396,15 +439,29 @@ function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, ma
         else ctx.arc(t.x, t.y, t.r + 6, 0, Math.PI * 2);
         ctx.stroke();
         const r = t.ry ?? t.r;
-        if (t.labelSide === "left") label(hl.label, t.x - (t.rx ?? r) - font, t.y, "right");
+        if ((hl.labelSide ?? t.labelSide) === "left") label(hl.label, t.x - (t.rx ?? r) - font, t.y + font * 0.35, "right");
         else label(hl.label, Math.min(Math.max(t.x, font * 8), w - font * 8), Math.max(font * 1.4, t.y - r - font * 0.6));
       },
       arrow: () => {
         const left = t.inLens ? t.x > t.inLens.x + t.inLens.w * 0.45 : t.x > w * 0.5;
-        const sx = t.x + (left ? -font * 7 : font * 7), sy = t.y - font * 3.5;
-        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(t.x, t.y); ctx.stroke();
-        arrowHead(ctx, c, font, sx, sy, t.x, t.y);
-        label(hl.label, sx, sy - font * 0.4, left ? "right" : "left");
+        const place = ARROW_FROM[hl.from ?? (left ? "upperLeft" : "upperRight")];
+        const sx = t.x + font * place.dx, sy = t.y + font * place.dy;
+        const k = 1 - (t.r ?? 0) / Math.hypot(t.x - sx, t.y - sy);
+        const ex = sx + (t.x - sx) * k, ey = sy + (t.y - sy) * k;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
+        arrowHead(ctx, c, font, sx, sy, ex, ey);
+        // a small circle around what the arrow points at, like a callout
+        if ((t.r ?? 0) >= 6) { ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.stroke(); }
+        label(hl.label, sx, sy + font * place.labelDy, place.align);
+      },
+      cut: () => {
+        // the gap cofilin opened, across the filament (screen y points down)
+        const ax = Math.sin(t.angle ?? 0), ay = Math.cos(t.angle ?? 0);
+        const half = font * 0.75;
+        ctx.save();
+        ctx.strokeStyle = c.cytoplasm; ctx.lineWidth = font * 0.45; ctx.lineCap = "butt";
+        ctx.beginPath(); ctx.moveTo(t.x - half * ax, t.y - half * ay); ctx.lineTo(t.x + half * ax, t.y + half * ay); ctx.stroke();
+        ctx.restore();
       },
       flow: () => {
         // a curved arrow from the rear of the network to the front

@@ -55,9 +55,9 @@ export const ACTIN_TOUR = [
     highlights: () => [
       {
         type: "lens", target: "branch", focus: "focus", notes: [
-          { type: "ring", target: "branchPoint", label: "Arp2/3 am Mutterfilament" },
-          { type: "arrow", target: "branchTip", label: "Tochterfilament: neues Plus-Ende" },
-          { type: "arrow", target: "mother", label: "Mutterfilament" },
+          { type: "ring", target: "branchPoint", label: "Arp2/3 am Mutterfilament", labelSide: "left" },
+          { type: "arrow", target: "branchTip", label: "Tochterfilament: neues Plus-Ende", from: "lowerLeft" },
+          { type: "arrow", target: "mother", label: "Mutterfilament", from: "above" },
         ],
       },
     ],
@@ -79,7 +79,7 @@ export const ACTIN_TOUR = [
     speed: 0.2,
     until: (s) => age(s, s.severSinceMark()) >= 0,
     highlights: () => [
-      { type: "lens", target: "sever", focus: "severFocus", notes: [{ type: "ring", target: "severPoint", label: "Cofilin schneidet ADP-Aktin" }] },
+      { type: "lens", target: "sever", focus: "severFocus", notes: [{ type: "cut", target: "severPoint" }, { type: "ring", target: "severPoint", label: "Cofilin schneidet ADP-Aktin" }] },
     ],
   },
   {
