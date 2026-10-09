@@ -51,10 +51,15 @@ export const ACTIN_TOUR = [
     text: "Arp2/3 setzt sich seitlich an ein Filament nahe der Membran und startet dort ein Tochterfilament im Winkel von 70°. Das Tochterfilament hat sein eigenes Plus-Ende: so entstehen laufend neue wachsende Enden.",
     setup: watch,
     speed: 0.2,
-    until: (s) => age(s, s.branchSinceMark()) >= 12,
+    until: (s) => { const b = s.branchSinceMark(); return !!b && (b.filament.subunitCount() >= 10 || age(s, b) >= 200); },
     highlights: () => [
-      { type: "ring", target: "branchPoint", label: "Arp2/3: Verzweigung" },
-      { type: "arrow", target: "branchTip", label: "neues Plus-Ende" },
+      {
+        type: "lens", target: "branch", focus: "focus", notes: [
+          { type: "ring", target: "branchPoint", label: "Arp2/3 am Mutterfilament" },
+          { type: "arrow", target: "branchTip", label: "Tochterfilament: neues Plus-Ende" },
+          { type: "arrow", target: "mother", label: "Mutterfilament" },
+        ],
+      },
     ],
   },
   {
@@ -63,7 +68,9 @@ export const ACTIN_TOUR = [
     setup: watch,
     speed: 0.2,
     until: (s) => age(s, s.capSinceMark()) >= 0,
-    highlights: () => [{ type: "ring", target: "cappedTip", label: "gekappt: wächst nicht mehr" }],
+    highlights: () => [
+      { type: "lens", target: "cap", focus: "capFocus", notes: [{ type: "ring", target: "cappedTip", label: "Capping-Protein: wächst nicht mehr" }] },
+    ],
   },
   {
     title: "Cofilin",
@@ -71,7 +78,9 @@ export const ACTIN_TOUR = [
     setup: watch,
     speed: 0.2,
     until: (s) => age(s, s.severSinceMark()) >= 0,
-    highlights: () => [{ type: "ring", target: "severPoint", label: "Cofilin schneidet ADP-Aktin" }],
+    highlights: () => [
+      { type: "lens", target: "sever", focus: "severFocus", notes: [{ type: "ring", target: "severPoint", label: "Cofilin schneidet ADP-Aktin" }] },
+    ],
   },
   {
     title: "Recycling und Tretmühle",

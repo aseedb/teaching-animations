@@ -22,6 +22,8 @@
     --accent: #2b5fa8;
     --accent-ink: #ffffff;
     --note-bg: #eaf0f8;
+    --highlight: #111418;
+    --halo: #ffffff;
     --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
@@ -44,6 +46,8 @@
       --accent: #7aa8f0;
       --accent-ink: #0f1218;
       --note-bg: #1e2a3a;
+      --highlight: #ffffff;
+      --halo: #0f1218;
     }
   }
   :root[data-theme="dark"] {
@@ -64,8 +68,11 @@
     --accent: #7aa8f0;
     --accent-ink: #0f1218;
     --note-bg: #1e2a3a;
+    --highlight: #ffffff;
+    --halo: #0f1218;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
   .page { max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
   .page > * { min-width: 0; }
@@ -96,6 +103,14 @@
   .note { background: var(--note-bg); border-radius: 8px; padding: 10px 12px; }
   .note h2 { margin: 0 0 2px; font-size: 1rem; }
   .note p { margin: 0; max-width: 85ch; }
+  .tour { background: var(--surface); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
+  .tour-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .tour h2 { margin: 0; font-size: 1.15rem; flex: 1 1 auto; }
+  .tour-progress, .tour-state { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-soft); }
+  .tour p { margin: 0; max-width: 85ch; }
+  #tour-next.ready { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.tour-start { border-color: var(--accent); color: var(--accent); }
+  body.touring .controls .free, body.touring .note { display: none; }
   footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 95ch; }
   footer p { margin: 0 0 4px; }
   @media (max-width: 600px) { .page { padding-inline: 16px; } .controls { padding: 8px 10px; } button { padding: 6px 10px; } }
@@ -115,12 +130,15 @@
 
   <section class="controls" aria-label="Steuerung">
     <div class="buttons">
+      <button id="tour-start" class="tour-start" type="button">Geführte Tour</button>
+    </div>
+    <div class="buttons free">
       <button id="play" class="primary" type="button">Pause</button>
       <button id="step" type="button">Einzelschritt</button>
       <button id="reset" type="button">Neu starten</button>
     </div>
-    <label class="speed" for="speed"><span>Tempo <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
-    <fieldset>
+    <label class="speed free" for="speed"><span>Tempo <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
+    <fieldset class="free">
       <legend>Proteine</legend>
       <label><input id="arp23" type="checkbox" checked> Arp2/3 (Verzweigung)</label>
       <label><input id="capping" type="checkbox" checked> Capping-Protein</label>
@@ -129,6 +147,15 @@
   </section>
 
   <section class="stage" aria-label="Lamellipodium">
+    <div class="tour" id="tour" hidden aria-live="polite">
+      <div class="tour-head"><h2 id="tour-title"></h2><span class="tour-state" id="tour-state"></span><span class="tour-progress" id="tour-progress"></span></div>
+      <p id="tour-text"></p>
+      <div class="buttons">
+        <button id="tour-back" type="button">Zurück</button>
+        <button id="tour-next" type="button">Weiter</button>
+        <button id="tour-exit" type="button">Tour beenden</button>
+      </div>
+    </div>
     <canvas id="stage" role="img" aria-label="Aktinnetz hinter der Plasmamembran an der Vorderkante der Zelle"></canvas>
     <div class="readout" id="readout"></div>
     <div class="legend">
