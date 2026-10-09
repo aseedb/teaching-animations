@@ -13,7 +13,7 @@ const FILM = location.hash === "#film";
 
 const NOTES = {
   growing: ["Wachstum", "GTP-Tubulin lagert sich am Plus-Ende an. Hinter der Spitze wird das GTP hydrolysiert; vorne bleibt eine kurze GTP-Kappe, die das Gitter zusammenhält."],
-  shrinking: ["Katastrophe", "Die GTP-Kappe ist verloren. Die GDP-Protofilamente spreizen sich nach aussen ab und zerfallen rasch: der Mikrotubulus schrumpft etwa zehnmal schneller, als er gewachsen ist."],
+  shrinking: ["Katastrophe", "Die GTP-Kappe ist verloren. Die GDP-Protofilamente spreizen sich nach aussen ab und zerfallen rasch: der Mikrotubulus schrumpft viel schneller, als er gewachsen ist."],
   rescue: ["Rettung", "Das Schrumpfen stoppt, eine neue GTP-Kappe bildet sich, und der Mikrotubulus wächst wieder."],
   edge: ["Am Zellrand", "Am Zellrand kann das Plus-Ende nicht weiter wachsen. Die GTP-Kappe geht verloren, und es folgt eine Katastrophe."],
 };
