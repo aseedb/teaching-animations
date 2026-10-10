@@ -73,18 +73,18 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
   const x0 = pad + font * 2;
   const x1 = w - pad - font * 2;
   const y = top + height * 0.55;
-  const X = (dimers) => x0 + ((dimers - SEED_DIMERS) / (CELL_EDGE_DIMERS - SEED_DIMERS)) * (x1 - x0);
+  const thickness = Math.max(6, height * 0.22);
+  const tipEnd = x1 - thickness / 2 - 4; // the rounded tip stops just short of the cell edge
+  const X = (dimers) => x0 + ((dimers - SEED_DIMERS) / (CELL_EDGE_DIMERS - SEED_DIMERS)) * (tipEnd - x0);
   ctx.fillStyle = c.centrosome;
   ctx.beginPath(); ctx.arc(x0 - font * 0.8, y, font * 0.8, 0, Math.PI * 2); ctx.fill();
   targets.centrosome = { x: x0 - font * 0.8, y, r: font * 1.6, labelSide: "below" };
-  ctx.strokeStyle = c.edge; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-  ctx.beginPath(); ctx.moveTo(x1 + 6, top); ctx.lineTo(x1 + 6, top + height); ctx.stroke(); ctx.setLineDash([]);
-  targets.cellEdge = { x: x1 + 6, y: top + height / 2, r: height * 0.45, labelSide: "left" };
+  targets.cellEdge = { x: x1, y: top + height * 0.6, rx: font * 0.8, ry: height * 0.42, labelSide: "left" }; // below its label
   const pfs = mt.protofilaments();
   const mean = pfs.reduce((s, p) => s + p.length, 0) / pfs.length;
   const cap = mt.meanCapDimers();
   ctx.lineCap = "round";
-  ctx.lineWidth = Math.max(6, height * 0.22);
+  ctx.lineWidth = thickness;
   ctx.strokeStyle = c.gdp;
   ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(X(mean), y); ctx.stroke();
   if (cap > 0.3) {
@@ -92,15 +92,20 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
     ctx.beginPath(); ctx.moveTo(X(Math.max(SEED_DIMERS, mean - Math.max(cap, 8))), y); ctx.lineTo(X(mean), y); ctx.stroke();
   }
   targets.plusEndOverview = { x: X(mean), y, r: height * 0.45, labelSide: "below" };
+  // the cell edge, on top of the microtubule so that it stays visible when the tip reaches it
+  ctx.lineCap = "butt";
+  ctx.strokeStyle = c.edge; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, top + height); ctx.stroke(); ctx.setLineDash([]);
   ctx.fillStyle = c.ink;
   ctx.textAlign = "left";
   ctx.fillText("Zentrosom (Minus-Ende)", x0 - font * 1.6, top + font * 0.2);
   ctx.textAlign = "right";
-  ctx.fillText("Zellrand", x1, top + font * 0.2);
+  ctx.fillText("Zellrand", x1 - 6, top + font * 0.2);
   ctx.textAlign = "center";
   ctx.fillStyle = mt.phase() === "growing" ? c.gtp : c.catastrophe;
   ctx.font = fontOf(font, true);
-  ctx.fillText(STATE_LABEL[scene.note()], Math.min(Math.max(X(mean), x0 + font * 9), x1 - font * 10), y - height * 0.3);
+  // above the microtubule, but never on the centrosome label (small canvases)
+  ctx.fillText(STATE_LABEL[scene.note()], Math.min(Math.max(X(mean), x0 + font * 9), x1 - font * 10), Math.max(y - height * 0.3, top + font * 1.45));
   ctx.font = fontOf(font);
 }
 
@@ -335,6 +340,15 @@ $("tour-start").addEventListener("click", startTour);
 $("tour-next").addEventListener("click", () => { tour.next(); if (tour.isOver()) endTour(); else showTourStep(); });
 $("tour-back").addEventListener("click", () => { tour.back(); showTourStep(); });
 $("tour-exit").addEventListener("click", endTour);
+// side by side (landscape): the canvas is as wide as the stage allows while its 16:9 frame fits the
+// stage's height; stacked (portrait): it takes the full width
+const SIDE_BY_SIDE = "(min-aspect-ratio: 5/4) and (min-width: 640px)";
+function fitCanvas() {
+  const canvas = $("stage");
+  const box = canvas.parentElement;
+  canvas.style.width = matchMedia(SIDE_BY_SIDE).matches ? `${Math.floor(Math.min(box.clientWidth, (box.clientHeight * 16) / 9))}px` : "";
+}
+if (!FILM) new ResizeObserver(() => { fitCanvas(); draw(); }).observe($("stage").parentElement);
 window.addEventListener("resize", draw);
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
 showSpeed();

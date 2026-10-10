@@ -4,7 +4,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-  /* layout: one 16:9 stage (also the film frame) with three bands: whole microtubule, plus-end zoom, length over time */
+  /* layout: one 16:9 canvas (also the film frame) with three bands: whole microtubule, plus-end zoom, length over time */
   :root {
     --ground: #f3f6f4;
     --surface: #ffffff;
@@ -67,75 +67,76 @@
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
-  .page { max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 14px; }
-  .page > * { min-width: 0; }
-  header { display: grid; gap: 6px; }
-  h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.3rem); line-height: 1.1; text-wrap: balance; }
-  .lede { margin: 0; color: var(--ink-soft); max-width: 75ch; }
-  .controls { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+  /* the app fills one screen: canvas and panel side by side on landscape screens, stacked on portrait ones */
+  .app { max-width: 1680px; margin: 0 auto; padding: 10px 16px 16px; display: grid; gap: 10px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "bar" "stage" "panel"; }
+  .bar { grid-area: bar; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
+  h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; text-wrap: balance; flex: 1 1 auto; }
+  .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .stage { grid-area: stage; min-width: 0; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
+  canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; outline: 1px solid var(--rule); background: var(--stage); }
+  .panel { grid-area: panel; min-width: 0; display: grid; gap: 10px; align-content: start; }
+  .rotate-hint { display: none; margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .controls { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
   .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
   button { font: inherit; font-weight: 700; line-height: 1.2; border-radius: 7px; padding: 8px 14px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); cursor: pointer; }
   button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 7rem; }
-  button:focus-visible, input:focus-visible { outline: 3px solid var(--rescue); outline-offset: 2px; }
-  .slider { display: grid; gap: 2px; flex: 1 1 240px; min-width: 0; font-size: 0.95rem; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--rescue); outline-offset: 2px; }
+  .slider { display: grid; gap: 2px; flex: 1 1 200px; min-width: 0; font-size: 0.95rem; }
   .slider-label { display: flex; justify-content: space-between; gap: 8px; }
   .slider output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
   input[type="range"] { width: 100%; accent-color: var(--accent); }
-  .stage { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px; display: grid; gap: 8px; }
-  canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 6px; background: var(--stage); }
-  .readout { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; color: var(--ink-soft); }
+  .readout { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; color: var(--ink-soft); }
   .readout b { color: var(--ink); font-weight: 500; }
   .chip { font-family: var(--font-body); font-weight: 700; font-size: 0.85rem; border-radius: 999px; padding: 2px 10px; color: var(--accent-ink); background: var(--gtp); }
   .chip[data-phase="shrinking"] { background: var(--catastrophe); }
   .note { background: var(--note-bg); border-radius: 8px; padding: 10px 12px; }
   .note h2 { margin: 0 0 2px; font-size: 1rem; }
   .note p { margin: 0; max-width: 85ch; }
-  .tour { background: var(--surface); border: 2px solid var(--highlight); border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; }
-  .tour-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .tour { background: var(--surface); border: 2px solid var(--highlight); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+  .tour-head { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
   .tour h2 { margin: 0; font-size: 1.15rem; flex: 1 1 auto; }
   .tour-progress, .tour-state { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-soft); }
   .tour p { margin: 0; max-width: 85ch; }
-  .tour .buttons { justify-content: flex-start; }
   #tour-next.ready { background: var(--highlight); border-color: var(--highlight); color: #ffffff; }
   button.tour-start { border-color: var(--highlight); color: var(--highlight); }
-  body.touring .controls .free, body.touring .note { display: none; }
+  body.touring .controls, body.touring .note, body.touring #tour-start { display: none; }
+  .about { max-width: 1680px; margin: 0 auto; padding: 8px 16px 32px; display: grid; gap: 8px; }
+  .about h2 { margin: 0; font-size: 1.1rem; }
+  .lede { margin: 0; max-width: 85ch; }
   footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 95ch; }
   footer p { margin: 0 0 4px; }
-  @media (max-width: 600px) { .page { padding-inline: 16px; } .controls { padding: 8px 10px; } button { padding: 6px 10px; } }
+  /* landscape screens: canvas left (fitted to the height by the script), panel right, no page scroll */
+  @media (min-aspect-ratio: 5/4) and (min-width: 640px) {
+    .app { height: 100vh; height: 100dvh; grid-template-columns: minmax(0, 1fr) clamp(272px, 26vw, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "bar bar" "stage panel"; }
+    .panel { overflow-y: auto; overscroll-behavior: contain; font-size: 0.95rem; }
+    .panel button { padding: 7px 11px; }
+    .panel button.primary { min-width: 5.5rem; }
+    .slider { flex-basis: 100%; }
+  }
+  /* phones held upright: a square canvas gives the three bands room */
+  @media (orientation: portrait) and (max-width: 600px) { .rotate-hint { display: block; } button { padding: 6px 10px; } canvas { aspect-ratio: 1 / 1; } }
+  /* film mode: only the canvas, full frame */
   body.film { background: var(--stage); }
-  body.film .page { max-width: none; padding: 0; }
-  body.film header, body.film .controls, body.film .readout, body.film .note, body.film footer { display: none; }
-  body.film .stage { border: 0; border-radius: 0; padding: 0; }
-  body.film canvas { width: 100vw; height: 56.25vw; border-radius: 0; }
+  body.film .app { display: block; max-width: none; padding: 0; height: auto; }
+  body.film .bar, body.film .panel, body.film .about { display: none; }
+  body.film canvas { width: 100vw; height: 56.25vw; border-radius: 0; outline: 0; }
 </style>
 
-<div class="page">
-  <header>
+<div class="app">
+  <header class="bar">
     <h1>Dynamische Instabilität</h1>
-    <p class="lede">Ein Mikrotubulus wächst vom Zentrosom zum Zellrand. An das Plus-Ende lagert sich GTP-Tubulin an; erst im Gitter wird das GTP hydrolysiert. Solange vorne eine GTP-Kappe bleibt, wächst er. Geht sie verloren, spreizen sich die Protofilamente ab und der Mikrotubulus schrumpft rasch: Katastrophe. Wird das Schrumpfen gestoppt und beginnt er wieder zu wachsen: Rettung.</p>
+    <button id="tour-start" class="tour-start" type="button">Geführte Tour</button>
+    <a class="more" href="#about">Worum es geht ↓</a>
   </header>
 
-  <section class="controls" aria-label="Steuerung">
-    <div class="buttons">
-      <button id="tour-start" class="tour-start" type="button">Geführte Tour</button>
-    </div>
-    <div class="buttons free">
-      <button id="play" class="primary" type="button">Pause</button>
-      <button id="step" type="button">Einzelschritt</button>
-      <button id="reset" type="button">Neu starten</button>
-    </div>
-    <div class="slider free">
-      <div class="slider-label"><label for="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
-      <input id="tubulin" type="range" min="5" max="20" step="1" value="10">
-    </div>
-    <div class="slider free" style="flex: 0 1 220px">
-      <div class="slider-label"><label for="speed">Tempo</label><output id="speed-out" for="speed"></output></div>
-      <input id="speed" type="range" min="0" max="7" step="1" value="6">
-    </div>
+  <section class="stage" aria-label="Mikrotubulus">
+    <canvas id="stage" role="img" aria-label="Mikrotubulus mit GTP-Kappe, Ansicht des Plus-Endes und Länge über die Zeit"></canvas>
   </section>
 
-  <section class="stage" aria-label="Mikrotubulus">
+  <aside class="panel" aria-label="Steuerung und Erläuterung">
+    <p class="rotate-hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
     <div class="tour" id="tour" hidden aria-live="polite">
       <div class="tour-head"><h2 id="tour-title"></h2><span class="tour-state" id="tour-state"></span><span class="tour-progress" id="tour-progress"></span></div>
       <p id="tour-text"></p>
@@ -145,16 +146,34 @@
         <button id="tour-exit" type="button">Tour beenden</button>
       </div>
     </div>
-    <canvas id="stage" role="img" aria-label="Mikrotubulus mit GTP-Kappe, Ansicht des Plus-Endes und Länge über die Zeit"></canvas>
+    <section class="controls" aria-label="Steuerung">
+      <div class="buttons">
+        <button id="play" class="primary" type="button">Pause</button>
+        <button id="step" type="button">Einzelschritt</button>
+        <button id="reset" type="button">Neu starten</button>
+      </div>
+      <div class="slider">
+        <div class="slider-label"><label for="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
+        <input id="tubulin" type="range" min="5" max="20" step="1" value="10">
+      </div>
+      <div class="slider">
+        <div class="slider-label"><label for="speed">Tempo</label><output id="speed-out" for="speed"></output></div>
+        <input id="speed" type="range" min="0" max="7" step="1" value="6">
+      </div>
+    </section>
     <div class="readout" id="readout"></div>
     <div class="note" aria-live="polite"><h2 id="note-title"></h2><p id="note-text"></p></div>
-  </section>
+  </aside>
+</div>
 
+<section class="about" id="about">
+  <h2>Worum es geht</h2>
+  <p class="lede">Ein Mikrotubulus wächst vom Zentrosom zum Zellrand. An das Plus-Ende lagert sich GTP-Tubulin an; erst im Gitter wird das GTP hydrolysiert. Solange vorne eine GTP-Kappe bleibt, wächst er. Geht sie verloren, spreizen sich die Protofilamente ab und der Mikrotubulus schrumpft rasch: Katastrophe. Wird das Schrumpfen gestoppt und beginnt er wieder zu wachsen: Rettung.</p>
   <footer>
     <p>Schematisch und beschleunigt: die Abfolge stimmt, die Zeitskala nicht. Gezeigt sind 13 Protofilamente aus αβ-Tubulin-Dimeren von 8 nm. Mehr freies Tubulin: längere GTP-Kappe, seltenere Katastrophen.</p>
     <p>Die Animation entspricht reinem Tubulin im Reagenzglas: dort schrumpft ein Mikrotubulus etwa 15-mal schneller, als er wächst (bei 10 µM etwa 1.7 gegen 27 µm/min; Walker et al. 1988). In der Zelle wachsen Mikrotubuli dank Hilfsproteinen viel schneller (etwa 7 bis 20 µm/min) und schrumpfen ähnlich schnell (etwa 13 bis 32 µm/min); Katastrophen und Rettungen sind dort häufiger (Cassimeris et al. 1988; Shelden &amp; Wadsworth 1993; Rusan et al. 2001).</p>
   </footer>
-</div>
+</section>
 
 <script>
 /* APP_SCRIPT */
