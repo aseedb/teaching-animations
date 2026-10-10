@@ -39,3 +39,34 @@ function gapsIn(german, other, lang) {
     return want === have ? [] : [`${lang}: ${key} (${have || "none"} instead of ${want || "none"})`];
   });
 }
+
+// fills the marked elements of the page: data-i18n (text), data-i18n-html (markup from the dictionary),
+// data-i18n-aria (accessible name), and presses the button of the chosen language (data-lang)
+export function translatePage(doc, t, lang) {
+  doc.documentElement.lang = lang;
+  doc.title = t("page.title");
+  doc.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  doc.querySelectorAll("[data-i18n-html]").forEach((el) => { el.innerHTML = t(el.dataset.i18nHtml); });
+  doc.querySelectorAll("[data-i18n-aria]").forEach((el) => { el.setAttribute("aria-label", t(el.dataset.i18nAria)); });
+  doc.querySelectorAll("[data-lang]").forEach((el) => { el.setAttribute("aria-pressed", String(el.dataset.lang === lang)); });
+}
+
+// the reader's choice, shared by all animations served from the same site; a storage that refuses
+// access (private window, blocked site data) just means no remembered choice
+const STORAGE_KEY = "teaching-animations.lang";
+
+export function readStoredLanguage(storage) {
+  try {
+    return storage?.getItem(STORAGE_KEY) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function storeLanguage(storage, lang) {
+  try {
+    storage?.setItem(STORAGE_KEY, lang);
+  } catch {
+    // the choice then lasts for this visit only
+  }
+}
