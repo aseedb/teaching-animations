@@ -6,6 +6,8 @@ import { DIMER_NM } from "./protofilament.js";
 import { Scene, HISTORY_STEPS } from "./scene.js";
 import { Tour } from "./tour.js";
 import { MT_TOUR } from "./mtTour.js";
+import { pickLanguage, translator, translatePage, readStoredLanguage, storeLanguage, decimals } from "./i18n.js";
+import { STRINGS } from "./strings.js";
 
 const SEED = 4;
 const ZOOM_DIMERS = 60; // dimers shown behind the plus end in the zoom band
@@ -14,15 +16,14 @@ const FILM = location.hash === "#film";
 const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per 60 Hz frame, from very slow to fast
 const READOUT_INTERVAL_MS = 500; // numbers below the stage change twice a second, not every frame
 
-const NOTES = {
-  growing: ["Wachstum", "GTP-Tubulin lagert sich am Plus-Ende an. Hinter der Spitze wird das GTP hydrolysiert; vorne bleibt eine kurze GTP-Kappe, die das Gitter zusammenhält."],
-  shrinking: ["Katastrophe", "Die GTP-Kappe ist verloren. Die GDP-Protofilamente spreizen sich nach aussen ab und zerfallen rasch: der Mikrotubulus schrumpft viel schneller, als er gewachsen ist."],
-  rescue: ["Rettung", "Das Schrumpfen stoppt, eine neue GTP-Kappe bildet sich, und der Mikrotubulus wächst wieder."],
-  edge: ["Am Zellrand", "Am Zellrand kann das Plus-Ende nicht weiter wachsen. Die GTP-Kappe geht verloren, und es folgt eine Katastrophe."],
-};
-const STATE_LABEL = { growing: "Plus-Ende wächst", shrinking: "Katastrophe: Plus-Ende schrumpft", rescue: "Rettung: Plus-Ende wächst wieder", edge: "Zellrand erreicht: Katastrophe" };
 
 const $ = (id) => document.getElementById(id);
+
+// the page's language (see i18n.js); the film is always German. `tr` gives a text, `num` a decimal number
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let lang = FILM ? "de" : pickLanguage({ hash: location.hash, stored: readStoredLanguage(storage), browser: navigator.languages ?? [navigator.language] });
+let tr = translator(STRINGS, lang);
+let num = decimals(lang);
 const scene = Scene.empty();
 let playing = true;
 let pending = 0;
@@ -102,14 +103,14 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
   ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, top + height); ctx.stroke();
   ctx.fillStyle = c.ink;
   ctx.textAlign = "left";
-  ctx.fillText("Zentrosom (Minus-Ende)", x0 - font * 1.6, top + font * 0.2);
+  ctx.fillText(tr("canvas.centrosome"), x0 - font * 1.6, top + font * 0.2);
   ctx.textAlign = "right";
-  ctx.fillText("Zellrand", x1 - 6, top + font * 0.2);
+  ctx.fillText(tr("canvas.edge"), x1 - 6, top + font * 0.2);
   ctx.textAlign = "center";
   ctx.fillStyle = mt.phase() === "growing" ? c.gtp : c.catastrophe;
   ctx.font = fontOf(font, true);
   // above the microtubule, but never on the centrosome label (small canvases)
-  ctx.fillText(STATE_LABEL[scene.note()], Math.min(Math.max(X(mean), x0 + font * 9), x1 - font * 10), Math.max(y - height * 0.3, top + font * 1.45));
+  ctx.fillText(tr(`state.${scene.note()}`), Math.min(Math.max(X(mean), x0 + font * 9), x1 - font * 10), Math.max(y - height * 0.3, top + font * 1.45));
   ctx.font = fontOf(font);
 }
 
@@ -126,7 +127,7 @@ function drawZoom(ctx, c, font, pad, w, top, height) {
   const shrinking = mt.phase() === "shrinking";
   ctx.fillStyle = c["ink-soft"];
   ctx.textAlign = "left";
-  ctx.fillText("Plus-Ende vergrössert: 13 Protofilamente", pad, top - font * 0.2);
+  ctx.fillText(tr("canvas.zoom"), pad, top - font * 0.2);
   let capStart = Infinity;
   let curlBox = null;
   pfs.forEach((states, r) => {
@@ -159,7 +160,7 @@ function drawZoom(ctx, c, font, pad, w, top, height) {
   if (curlBox) targets.curls = { x: (curlBox.x0 + curlBox.x1) / 2, y: (curlBox.y0 + curlBox.y1) / 2, r: Math.max(curlBox.x1 - curlBox.x0, curlBox.y1 - curlBox.y0) * 0.65 };
   // legend at the right of the zoom
   const lx = right + font * 1.2;
-  [["GTP-Tubulin", c.gtp], ["GDP-Tubulin", c.gdp]].forEach(([label, color], k) => {
+  [[tr("canvas.gtp"), c.gtp], [tr("canvas.gdp"), c.gdp]].forEach(([label, color], k) => {
     const ly = top + height * 0.35 + k * font * 1.6;
     ctx.fillStyle = color; ctx.fillRect(lx, ly - font * 0.7, font * 1.2, font * 0.8);
     ctx.fillStyle = c.ink; ctx.textAlign = "left"; ctx.fillText(label, lx + font * 1.6, ly);
@@ -178,7 +179,7 @@ function drawPlot(ctx, c, font, pad, w, top, height) {
   ctx.fillStyle = c["ink-soft"]; ctx.textAlign = "right";
   for (const um of [0, 4, 8]) ctx.fillText(`${um} µm`, x0 - 6, Y(um * 1000) + font * 0.35);
   ctx.textAlign = "left";
-  ctx.fillText("Länge über die Zeit", x0 + 8, top + font * 0.2);
+  ctx.fillText(tr("canvas.plot"), x0 + 8, top + font * 0.2);
   targets.plot = { x: (x0 + x1) / 2, y: top + height / 2, rx: (x1 - x0) / 2, ry: height / 2 };
   if (history.length < 2) return;
   const XS = (i) => x0 + (i / HISTORY_STEPS) * (x1 - x0);
@@ -193,12 +194,17 @@ function drawPlot(ctx, c, font, pad, w, top, height) {
 
 // ---- tour highlights -----------------------------------------------------
 
+// a label on a light box, kept whole inside the canvas (longer translations included)
 function labelAt(ctx, c, font, text, x, y, align = "center") {
   if (!text) return;
   ctx.font = fontOf(font, true);
   ctx.textAlign = align;
   const tw = ctx.measureText(text).width;
-  const left = align === "center" ? x - tw / 2 : align === "left" ? x : x - tw;
+  const width = ctx.canvas.clientWidth;
+  const natural = align === "center" ? x - tw / 2 : align === "left" ? x : x - tw;
+  const shift = Math.max(8 - natural, Math.min(0, width - 8 - (natural + tw)));
+  const left = natural + shift;
+  x += shift;
   ctx.fillStyle = c.surface;
   ctx.globalAlpha = 0.92;
   ctx.fillRect(left - 6, y - font * 1.05, tw + 12, font * 1.45);
@@ -221,9 +227,9 @@ function drawHighlights(ctx, c, font, w, h, highlights) {
         else ctx.arc(t.x, t.y, t.r + 6, 0, Math.PI * 2);
         ctx.stroke();
         const r = t.ry ?? t.r;
-        if (t.labelSide === "left") labelAt(ctx, c, font, hl.label, t.x - r - font, t.y + font * 0.4, "right");
-        else if (t.labelSide === "below") labelAt(ctx, c, font, hl.label, Math.min(Math.max(t.x, font * 8), w - font * 8), t.y + r + font * 1.8);
-        else labelAt(ctx, c, font, hl.label, Math.min(Math.max(t.x, font * 8), w - font * 8), Math.max(font * 1.4, t.y - r - font * 0.6));
+        if (t.labelSide === "left") labelAt(ctx, c, font, hl.label && tr(hl.label), t.x - r - font, t.y + font * 0.4, "right");
+        else if (t.labelSide === "below") labelAt(ctx, c, font, hl.label && tr(hl.label), Math.min(Math.max(t.x, font * 8), w - font * 8), t.y + r + font * 1.8);
+        else labelAt(ctx, c, font, hl.label && tr(hl.label), Math.min(Math.max(t.x, font * 8), w - font * 8), Math.max(font * 1.4, t.y - r - font * 0.6));
       },
       arrow: () => {
         const sx = t.x - font * 6, sy = t.y - font * 3.5;
@@ -234,13 +240,13 @@ function drawHighlights(ctx, c, font, w, h, highlights) {
         ctx.lineTo(t.x - font * 0.9 * Math.cos(a - 0.45), t.y - font * 0.9 * Math.sin(a - 0.45));
         ctx.lineTo(t.x - font * 0.9 * Math.cos(a + 0.45), t.y - font * 0.9 * Math.sin(a + 0.45));
         ctx.closePath(); ctx.fillStyle = c.highlight; ctx.fill();
-        labelAt(ctx, c, font, hl.label, sx, sy - font * 0.4, "right");
+        labelAt(ctx, c, font, hl.label && tr(hl.label), sx, sy - font * 0.4, "right");
       },
       bracket: () => {
         ctx.beginPath();
         ctx.moveTo(t.x0, t.y + font * 0.6); ctx.lineTo(t.x0, t.y); ctx.lineTo(t.x1, t.y); ctx.lineTo(t.x1, t.y + font * 0.6);
         ctx.stroke();
-        labelAt(ctx, c, font, hl.label, (t.x0 + t.x1) / 2, t.y - font * 0.4);
+        labelAt(ctx, c, font, hl.label && tr(hl.label), (t.x0 + t.x1) / 2, t.y - font * 0.4);
       },
     };
     kinds[hl.type]?.();
@@ -255,15 +261,14 @@ function updateReadout() {
   const mt = scene.microtubule();
   const phase = mt.phase();
   $("readout").innerHTML =
-    `<span class="chip" data-phase="${phase}">${phase === "growing" ? "Wachstum" : "Schrumpfen"}</span>` +
-    `<span>Länge <b>${(mt.lengthNm() / 1000).toFixed(2)} µm</b></span>` +
-    `<span>GTP-Kappe <b>${mt.meanCapDimers().toFixed(1)} Dimere</b></span>` +
-    `<span>Katastrophen <b>${mt.catastrophes()}</b></span>` +
-    `<span>Rettungen <b>${mt.rescues()}</b></span>` +
-    `<span>Tubulin <b>${mt.tubulin()} µM</b></span>`;
-  const [title, text] = NOTES[scene.note()];
-  $("note-title").textContent = title;
-  $("note-text").textContent = text;
+    `<span class="chip" data-phase="${phase}">${tr(phase === "growing" ? "readout.growing" : "readout.shrinking")}</span>` +
+    `<span>${tr("readout.length")} <b>${num(mt.lengthNm() / 1000, 2)} µm</b></span>` +
+    `<span>${tr("readout.cap")} <b>${num(mt.meanCapDimers(), 1)} ${tr("readout.dimers")}</b></span>` +
+    `<span>${tr("readout.catastrophes")} <b>${mt.catastrophes()}</b></span>` +
+    `<span>${tr("readout.rescues")} <b>${mt.rescues()}</b></span>` +
+    `<span>${tr("readout.tubulin")} <b>${mt.tubulin()} µM</b></span>`;
+  $("note-title").textContent = tr(`note.${scene.note()}.title`);
+  $("note-text").textContent = tr(`note.${scene.note()}.text`);
 }
 
 function updateReadoutSometimes() {
@@ -275,17 +280,17 @@ function updateReadoutSometimes() {
 
 function showTourStep() {
   const step = tour.step();
-  $("tour-title").textContent = step.title;
-  $("tour-text").textContent = step.text;
+  $("tour-title").textContent = tr(step.title);
+  $("tour-text").textContent = tr(step.text);
   $("tour-progress").textContent = tour.progress();
   $("tour-back").disabled = tour.index() === 0;
-  $("tour-next").textContent = tour.index() === MT_TOUR.length - 1 ? "Tour beenden" : "Weiter";
+  $("tour-next").textContent = tr(tour.index() === MT_TOUR.length - 1 ? "tour.exit" : "tour.next");
   updateTourState();
   updateReadout();
 }
 
 function updateTourState() {
-  $("tour-state").textContent = tour.isWaiting() ? "" : "läuft …";
+  $("tour-state").textContent = tour.isWaiting() ? "" : tr("tour.running");
   $("tour-next").classList.toggle("ready", tour.isWaiting());
 }
 
@@ -332,14 +337,15 @@ function frame(now) {
 
 function showSpeed() {
   const perSecond = SPEEDS[Number($("speed").value)] * 60;
-  $("speed-out").textContent = perSecond < 10 ? `${perSecond.toFixed(perSecond < 2 ? 1 : 0)} Schritte/s` : `${Math.round(perSecond)} Schritte/s`;
+  $("speed-out").textContent = tr("speed.out", { n: perSecond < 2 ? num(perSecond, 1) : Math.round(perSecond) });
 }
 
 $("tubulin").addEventListener("input", (e) => { $("tubulin-out").textContent = `${e.target.value} µM`; scene.microtubule().setTubulin(Number(e.target.value)); });
-$("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Abspielen"; });
+const showPlay = () => { $("play").textContent = tr(playing ? "play.pause" : "play.play"); };
+$("play").addEventListener("click", () => { playing = !playing; showPlay(); });
 $("reset").addEventListener("click", () => { reset(); updateReadout(); draw(); });
 $("speed").addEventListener("input", showSpeed);
-$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Abspielen"; scene.advance(1); updateReadout(); draw(); });
+$("step").addEventListener("click", () => { playing = false; showPlay(); scene.advance(1); updateReadout(); draw(); });
 $("tour-start").addEventListener("click", startTour);
 $("tour-next").addEventListener("click", () => { tour.next(); if (tour.isOver()) endTour(); else showTourStep(); });
 $("tour-back").addEventListener("click", () => { tour.back(); showTourStep(); });
@@ -355,6 +361,22 @@ function fitCanvas() {
 if (!FILM) new ResizeObserver(() => { fitCanvas(); draw(); }).observe($("stage").parentElement);
 window.addEventListener("resize", draw);
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
+
+function setLanguage(next) {
+  lang = next;
+  tr = translator(STRINGS, lang);
+  num = decimals(lang);
+  storeLanguage(storage, lang);
+  translatePage(document, tr, lang);
+  showPlay();
+  showSpeed();
+  if (tour) showTourStep(); else updateReadout();
+  fitCanvas();
+  draw();
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLanguage(b.dataset.lang)));
+translatePage(document, tr, lang);
+showPlay();
 showSpeed();
 
 if (FILM) document.body.classList.add("film");

@@ -74,6 +74,10 @@
   .bar { grid-area: bar; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
   h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; text-wrap: balance; flex: 1 1 auto; }
   .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license a { color: inherit; }
   .stage { grid-area: stage; min-width: 0; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
   canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; outline: 1px solid var(--rule); background: var(--stage); }
   .panel { grid-area: panel; min-width: 0; display: grid; gap: 10px; align-content: start; }
@@ -126,38 +130,43 @@
 
 <div class="app">
   <header class="bar">
-    <h1>Dynamische Instabilität</h1>
-    <button id="tour-start" class="tour-start" type="button">Geführte Tour</button>
-    <a class="more" href="#about">Worum es geht ↓</a>
+    <h1 data-i18n="page.title">Dynamische Instabilität</h1>
+    <button id="tour-start" class="tour-start" type="button" data-i18n="tour.start">Geführte Tour</button>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
   </header>
 
-  <section class="stage" aria-label="Mikrotubulus">
-    <canvas id="stage" role="img" aria-label="Mikrotubulus mit GTP-Kappe, Ansicht des Plus-Endes und Länge über die Zeit"></canvas>
+  <section class="stage" aria-label="Mikrotubulus" data-i18n-aria="stage.aria">
+    <canvas id="stage" role="img" aria-label="Mikrotubulus mit GTP-Kappe, Ansicht des Plus-Endes und Länge über die Zeit" data-i18n-aria="canvas.aria"></canvas>
   </section>
 
-  <aside class="panel" aria-label="Steuerung und Erläuterung">
-    <p class="rotate-hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
+  <aside class="panel" aria-label="Steuerung und Erläuterung" data-i18n-aria="panel.aria">
+    <p class="rotate-hint" data-i18n="rotate.hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
     <div class="tour" id="tour" hidden aria-live="polite">
       <div class="tour-head"><h2 id="tour-title"></h2><span class="tour-state" id="tour-state"></span><span class="tour-progress" id="tour-progress"></span></div>
       <p id="tour-text"></p>
       <div class="buttons">
-        <button id="tour-back" type="button">Zurück</button>
+        <button id="tour-back" type="button" data-i18n="tour.back">Zurück</button>
         <button id="tour-next" type="button">Weiter</button>
-        <button id="tour-exit" type="button">Tour beenden</button>
+        <button id="tour-exit" type="button" data-i18n="tour.exit">Tour beenden</button>
       </div>
     </div>
-    <section class="controls" aria-label="Steuerung">
+    <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
       <div class="buttons">
         <button id="play" class="primary" type="button">Pause</button>
-        <button id="step" type="button">Einzelschritt</button>
-        <button id="reset" type="button">Neu starten</button>
+        <button id="step" type="button" data-i18n="step">Einzelschritt</button>
+        <button id="reset" type="button" data-i18n="reset">Neu starten</button>
       </div>
       <div class="slider">
-        <div class="slider-label"><label for="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
+        <div class="slider-label"><label for="tubulin" data-i18n="tubulin">freies Tubulin</label><output id="tubulin-out" for="tubulin">10 µM</output></div>
         <input id="tubulin" type="range" min="5" max="20" step="1" value="10">
       </div>
       <div class="slider">
-        <div class="slider-label"><label for="speed">Tempo</label><output id="speed-out" for="speed"></output></div>
+        <div class="slider-label"><label for="speed" data-i18n="speed">Tempo</label><output id="speed-out" for="speed"></output></div>
         <input id="speed" type="range" min="0" max="7" step="1" value="6">
       </div>
     </section>
@@ -167,11 +176,12 @@
 </div>
 
 <section class="about" id="about">
-  <h2>Worum es geht</h2>
-  <p class="lede">Ein Mikrotubulus wächst vom Zentrosom zum Zellrand. An das Plus-Ende lagert sich GTP-Tubulin an; erst im Gitter wird das GTP hydrolysiert. Solange vorne eine GTP-Kappe bleibt, wächst er. Geht sie verloren, spreizen sich die Protofilamente ab und der Mikrotubulus schrumpft rasch: Katastrophe. Wird das Schrumpfen gestoppt und beginnt er wieder zu wachsen: Rettung.</p>
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Ein Mikrotubulus wächst vom Zentrosom zum Zellrand. An das Plus-Ende lagert sich GTP-Tubulin an; erst im Gitter wird das GTP hydrolysiert. Solange vorne eine GTP-Kappe bleibt, wächst er. Geht sie verloren, spreizen sich die Protofilamente ab und der Mikrotubulus schrumpft rasch: Katastrophe. Wird das Schrumpfen gestoppt und beginnt er wieder zu wachsen: Rettung.</p>
   <footer>
-    <p>Schematisch und beschleunigt: die Abfolge stimmt, die Zeitskala nicht. Gezeigt sind 13 Protofilamente aus αβ-Tubulin-Dimeren von 8 nm. Mehr freies Tubulin: längere GTP-Kappe, seltenere Katastrophen.</p>
-    <p>Die Animation entspricht reinem Tubulin im Reagenzglas: dort schrumpft ein Mikrotubulus etwa 15-mal schneller, als er wächst (bei 10 µM etwa 1.7 gegen 27 µm/min; Walker et al. 1988). In der Zelle wachsen Mikrotubuli dank Hilfsproteinen viel schneller (etwa 7 bis 20 µm/min) und schrumpfen ähnlich schnell (etwa 13 bis 32 µm/min); Katastrophen und Rettungen sind dort häufiger (Cassimeris et al. 1988; Shelden &amp; Wadsworth 1993; Rusan et al. 2001).</p>
+    <p data-i18n="about.scale">Schematisch und beschleunigt: die Abfolge stimmt, die Zeitskala nicht. Gezeigt sind 13 Protofilamente aus αβ-Tubulin-Dimeren von 8 nm. Mehr freies Tubulin: längere GTP-Kappe, seltenere Katastrophen.</p>
+    <p data-i18n="about.invitro">Die Animation entspricht reinem Tubulin im Reagenzglas: dort schrumpft ein Mikrotubulus etwa 15-mal schneller, als er wächst (bei 10 µM etwa 1.7 gegen 27 µm/min; Walker et al. 1988). In der Zelle wachsen Mikrotubuli dank Hilfsproteinen viel schneller (etwa 7 bis 20 µm/min) und schrumpfen ähnlich schnell (etwa 13 bis 32 µm/min); Katastrophen und Rettungen sind dort häufiger (Cassimeris et al. 1988; Shelden &amp; Wadsworth 1993; Rusan et al. 2001).</p>
+    <p class="license" data-i18n-html="license"></p>
   </footer>
 </section>
 
