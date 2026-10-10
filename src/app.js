@@ -117,6 +117,7 @@ function draw() {
   caption(rear.find((t) => ctx.measureText(t).width <= room) ?? rear.at(-1), 10, "left");
   caption(front, X(m) - 10, "right");
   if (FILM) drawFilmLegend(ctx, w, h, c, font);
+  if (FILM) drawFilmCredit(ctx, w, h, c, font);
   if (tour && !tour.isOver()) {
     targets = resolveTargets({ X, Y, m, scale, h, font });
     drawHighlights(ctx, c, font, w, h, tour.highlights());
@@ -514,6 +515,15 @@ function drawExplanation(ctx, h, c, font) {
     ctx.font = fontOf(font);
     ctx.fillText(text, 10 + font * 1.5 + nameW, y);
   });
+}
+
+// the licence in the bottom corner outside the cell, in the film frame (the page states it below)
+function drawFilmCredit(ctx, w, h, c, font) {
+  ctx.font = fontOf(Math.round(font * 0.65));
+  ctx.fillStyle = c["ink-soft"];
+  ctx.textAlign = "right";
+  ["CC BY 4.0", "Universität Bern", "© Benoît Zuber"].forEach((line, k) => ctx.fillText(line, w - 6, h - 6 - k * font * 0.8));
+  ctx.font = fontOf(font);
 }
 
 function drawFilmLegend(ctx, w, h, c, font) {
