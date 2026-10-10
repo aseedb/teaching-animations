@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { pickLanguage, translator, gaps, translatePage, readStoredLanguage, storeLanguage, LANGUAGES, DEFAULT_LANGUAGE } from "../src/i18n.js";
+import { pickLanguage, translator, gaps, translatePage, readStoredLanguage, storeLanguage, decimals, LANGUAGES, DEFAULT_LANGUAGE } from "../src/i18n.js";
 
 const anyOf = (list) => list[Math.floor(Math.random() * list.length)];
 const anyOtherThan = (lang) => anyOf(LANGUAGES.filter((l) => l !== lang));
@@ -168,6 +168,26 @@ describe("StoredLanguageSpecification", () => {
   test("ShouldNotFailWhenTheStorageRefusesToStore", () => {
     // GIVEN / WHEN / THEN
     assert.doesNotThrow(() => storeLanguage(refusingStorage, anyOf(LANGUAGES)));
+  });
+});
+
+describe("NumberFormatSpecification", () => {
+  test("ShouldWriteADecimalCommaInFrench", () => {
+    // GIVEN
+    const value = 1 + Math.random();
+    // WHEN
+    const text = decimals("fr")(value, 2);
+    // THEN
+    assert.equal(text, value.toFixed(2).replace(".", ","));
+  });
+
+  test("ShouldWriteADecimalPointInGermanAndEnglish", () => {
+    // GIVEN
+    const value = 1 + Math.random();
+    // WHEN
+    const texts = ["de", "en"].map((lang) => decimals(lang)(value, 2));
+    // THEN
+    assert.deepEqual(texts, [value.toFixed(2), value.toFixed(2)]);
   });
 });
 
