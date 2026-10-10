@@ -7,6 +7,8 @@ import { SUBUNIT_NM } from "./filament.js";
 import { Scene } from "./scene.js";
 import { Tour } from "./tour.js";
 import { ACTIN_TOUR } from "./actinTour.js";
+import { pickLanguage, translator, translatePage, readStoredLanguage, storeLanguage, decimals } from "./i18n.js";
+import { STRINGS } from "./strings.js";
 
 const SEED = 11;
 const VIEW_BEHIND_NM = 480; // network shown behind the membrane
@@ -16,21 +18,18 @@ const FILM = location.hash === "#film";
 const SPEEDS = [0.02, 0.05, 0.1, 0.25, 0.5, 1, 2, 4]; // simulation steps per 60 Hz frame, from very slow to fast
 const READOUT_INTERVAL_MS = 500; // numbers below the stage change twice a second, not every frame
 
-const NOTES = {
-  normal: ["Tretmühle", "Vorne wird ATP-Aktin eingebaut, das Netz altert nach hinten (ATP → ADP-Pi → ADP), Cofilin zerlegt die alten ADP-Filamente, und Profilin bringt die Monomere als ATP-Aktin wieder nach vorne."],
-  noArp: ["Ohne Arp2/3", "Ohne Verzweigung entstehen keine neuen Plus-Enden. Die vorhandenen werden nach und nach gekappt, und der Vorschub erlahmt."],
-  noCapping: ["Ohne Capping-Protein", "Kein Plus-Ende wird gekappt: wenige lange Filamente wachsen weiter und verbrauchen die Monomere, statt dass das Netz dicht und kurz bleibt."],
-  noCofilin: ["Ohne Cofilin", "Die alten Filamente zerfallen nur langsam am Minus-Ende: es kommen weniger Monomere in den Pool zurück, und der Vorschub wird langsamer."],
-};
-const EXPLANATION = [
-  ["Arp2/3", "arp", "setzt seitlich ein Tochterfilament an (70°); jede Verzweigung bringt ein neues Plus-Ende"],
-  ["Capping-Protein", "capping", "kappt ein Plus-Ende; es wächst nicht weiter"],
-  ["Cofilin", "adp", "zerlegt alte ADP-Filamente; die Monomere kehren zurück"],
-];
+// the explanation box of the free simulation: protein, colour of its swatch (texts in strings.js)
+const EXPLANATION = [["arp", "arp"], ["capping", "capping"], ["cofilin", "adp"]];
 const STATE_COLOR = { ATP: "atp", "ADP-Pi": "adppi", ADP: "adp" };
 const PROTEINS = ["arp23", "capping", "cofilin"];
 
 const $ = (id) => document.getElementById(id);
+
+// the page's language (see i18n.js); the film is always German. `tr` gives a text, `num` a decimal number
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let lang = FILM ? "de" : pickLanguage({ hash: location.hash, stored: readStoredLanguage(storage), browser: navigator.languages ?? [navigator.language] });
+let tr = translator(STRINGS, lang);
+let num = decimals(lang);
 const scene = Scene.empty();
 let playing = true;
 let pending = 0;
@@ -97,7 +96,7 @@ function draw() {
   ctx.translate(X(m) + 6 + font, h / 2);
   ctx.rotate(Math.PI / 2);
   ctx.textAlign = "center";
-  ctx.fillText("Plasmamembran", 0, 0);
+  ctx.fillText(tr("canvas.membrane"), 0, 0);
   ctx.restore();
   const caption = (text, x, align) => {
     ctx.textAlign = align;
@@ -112,8 +111,8 @@ function draw() {
   };
   if (!tour) drawExplanation(ctx, h, c, font);
   // the long caption only where both fit side by side
-  const rear = ["← älter: ADP, Abbau, Monomere zurück in den Pool", "← älter: ADP, Abbau"];
-  const front = "Plus-Enden zur Membran →";
+  const rear = [tr("caption.rear"), tr("caption.rearShort")];
+  const front = tr("caption.front");
   const room = X(m) - 20 - ctx.measureText(front).width - font * 2;
   caption(rear.find((t) => ctx.measureText(t).width <= room) ?? rear.at(-1), 10, "left");
   caption(front, X(m) - 10, "right");
@@ -384,7 +383,7 @@ function drawLens(ctx, c, font, w, h, hl) {
   drawNetwork(ctx, c, { X: LX, Y: LY, scale: zs, clip: R, membraneX: m, near, focus, lineScale: zs * 0.45 });
   ctx.strokeStyle = c.highlight; ctx.lineWidth = 3;
   ctx.strokeRect(R.x, R.y, R.w, R.h);
-  labelAt(ctx, c, font, `Lupe (${Math.round(zoom)}×)`, R.x + 8, R.y + font * 1.3, "left");
+  labelAt(ctx, c, font, tr("lens", { zoom: Math.round(zoom) }), R.x + 8, R.y + font * 1.3, "left");
   // annotations inside the lens
   const local = {};
   for (const [name, q] of Object.entries(world)) if (Number.isFinite(q?.x)) local[name] = { x: LX(q.x), y: LY(q.y), r: font * 0.9, inLens: R, angle: q.angle };
@@ -443,7 +442,7 @@ const ARROW_FROM = {
 function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, map) {
   const stroke = () => { ctx.strokeStyle = c.highlight; ctx.lineWidth = width; };
   const frame = { x: 0, y: 0, w, h };
-  const label = (text, x, y, align, t) => { if (withLabels) labelAt(ctx, c, font, text, x, y, align, t?.inLens ?? frame); };
+  const label = (key, x, y, align, t) => { if (withLabels) labelAt(ctx, c, font, key && tr(key), x, y, align, t?.inLens ?? frame); };
   stroke();
   for (const hl of highlights) {
     const t = map[hl.target];
@@ -496,13 +495,15 @@ function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, ma
 function drawExplanation(ctx, h, c, font) {
   const line = font * 1.5;
   const top = h - font * 2.4 - EXPLANATION.length * line - font * 0.6;
-  const widths = EXPLANATION.map(([name, , text]) => ctx.measureText(`${name}: ${text}`).width);
+  const widths = EXPLANATION.map(([key]) => ctx.measureText(`${tr(`explain.${key}.name`)}: ${tr(`explain.${key}.text`)}`).width);
   ctx.fillStyle = c.cytoplasm;
   ctx.globalAlpha = 0.9;
   ctx.fillRect(4, top - font * 0.4, Math.max(...widths) + font * 2.6, EXPLANATION.length * line + font * 0.6);
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
-  EXPLANATION.forEach(([name, color, text], k) => {
+  EXPLANATION.forEach(([key, color], k) => {
+    const name = tr(`explain.${key}.name`);
+    const text = tr(`explain.${key}.text`);
     const y = top + (k + 0.8) * line;
     ctx.fillStyle = c[color];
     ctx.fillRect(10, y - font * 0.45, font * 1.1, font * 0.5);
@@ -516,7 +517,7 @@ function drawExplanation(ctx, h, c, font) {
 }
 
 function drawFilmLegend(ctx, w, h, c, font) {
-  const items = [["ATP-Aktin", c.atp], ["ADP-Pi-Aktin", c.adppi], ["ADP-Aktin", c.adp], ["Arp2/3", c.arp], ["Capping-Protein", c.capping], ["wachsendes Plus-Ende", "#ffffff"]];
+  const items = [[tr("legend.atp"), c.atp], [tr("legend.adppi"), c.adppi], [tr("legend.adp"), c.adp], ["Arp2/3", c.arp], [tr("legend.capping"), c.capping], [tr("legend.tip"), "#ffffff"]];
   let x = 10;
   const y = font * 1.6;
   ctx.textAlign = "left";
@@ -556,12 +557,12 @@ function updateReadout() {
   const first = speedHistory[0], last = speedHistory.at(-1);
   const advance = last.step > first.step ? (last.x - first.x) / (last.step - first.step) : 0;
   $("readout").innerHTML =
-    `<span>Vorschub <b>${advance.toFixed(2)} nm/Schritt</b></span>` +
-    `<span>freie Monomere <b>${cell.pool()}</b></span>` +
-    `<span>wachsende Plus-Enden <b>${growing}</b></span>`;
-  const [title, text] = NOTES[noteKey(cell.treatment())];
-  $("note-title").textContent = title;
-  $("note-text").textContent = text;
+    `<span>${tr("readout.advance")} <b>${num(advance, 2)} ${tr("readout.unit")}</b></span>` +
+    `<span>${tr("readout.pool")} <b>${cell.pool()}</b></span>` +
+    `<span>${tr("readout.growing")} <b>${growing}</b></span>`;
+  const note = noteKey(cell.treatment());
+  $("note-title").textContent = tr(`note.${note}.title`);
+  $("note-text").textContent = tr(`note.${note}.text`);
 }
 
 function updateReadoutSometimes() {
@@ -573,18 +574,18 @@ function updateReadoutSometimes() {
 
 function showTourStep() {
   const step = tour.step();
-  $("tour-title").textContent = step.title;
-  $("tour-text").textContent = step.text;
+  $("tour-title").textContent = tr(step.title);
+  $("tour-text").textContent = tr(step.text);
   $("tour-progress").textContent = tour.progress();
   $("tour-back").disabled = tour.index() === 0;
-  $("tour-next").textContent = tour.index() === ACTIN_TOUR.length - 1 ? "Tour beenden" : "Weiter";
+  $("tour-next").textContent = tr(tour.index() === ACTIN_TOUR.length - 1 ? "tour.exit" : "tour.next");
   speedHistory = [];
   updateTourState();
   updateReadout();
 }
 
 function updateTourState() {
-  $("tour-state").textContent = tour.isWaiting() ? "" : "läuft …";
+  $("tour-state").textContent = tour.isWaiting() ? "" : tr("tour.running");
   $("tour-next").classList.toggle("ready", tour.isWaiting());
 }
 
@@ -632,16 +633,17 @@ function frame(now) {
 
 function showSpeed() {
   const perSecond = SPEEDS[Number($("speed").value)] * 60;
-  $("speed-out").textContent = perSecond < 2 ? `${perSecond.toFixed(1)} Schritte/s` : `${Math.round(perSecond)} Schritte/s`;
+  $("speed-out").textContent = tr("speed.out", { n: perSecond < 2 ? num(perSecond, 1) : Math.round(perSecond) });
 }
 
 for (const id of PROTEINS) {
   $(id).addEventListener("change", () => { scene.cell().treat(treatmentFromControls()); updateReadout(); });
 }
-$("play").addEventListener("click", () => { playing = !playing; $("play").textContent = playing ? "Pause" : "Abspielen"; });
+const showPlay = () => { $("play").textContent = tr(playing ? "play.pause" : "play.play"); };
+$("play").addEventListener("click", () => { playing = !playing; showPlay(); });
 $("reset").addEventListener("click", () => { reset(); updateReadout(); draw(); });
 $("speed").addEventListener("input", showSpeed);
-$("step").addEventListener("click", () => { playing = false; $("play").textContent = "Abspielen"; scene.advance(1); updateReadout(); draw(); });
+$("step").addEventListener("click", () => { playing = false; showPlay(); scene.advance(1); updateReadout(); draw(); });
 $("tour-start").addEventListener("click", startTour);
 $("tour-next").addEventListener("click", () => { tour.next(); if (tour.isOver()) endTour(); else showTourStep(); });
 $("tour-back").addEventListener("click", () => { tour.back(); showTourStep(); });
@@ -657,6 +659,22 @@ function fitCanvas() {
 if (!FILM) new ResizeObserver(() => { fitCanvas(); draw(); }).observe($("stage").parentElement);
 window.addEventListener("resize", draw);
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
+
+function setLanguage(next) {
+  lang = next;
+  tr = translator(STRINGS, lang);
+  num = decimals(lang);
+  storeLanguage(storage, lang);
+  translatePage(document, tr, lang);
+  showPlay();
+  showSpeed();
+  if (tour) showTourStep(); else updateReadout();
+  fitCanvas();
+  draw();
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLanguage(b.dataset.lang)));
+translatePage(document, tr, lang);
+showPlay();
 showSpeed();
 
 // film mode: driven frame by frame from outside (headless recording)

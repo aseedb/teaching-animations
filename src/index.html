@@ -80,6 +80,10 @@
   .bar { grid-area: bar; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
   h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; text-wrap: balance; flex: 1 1 auto; }
   .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license a { color: inherit; }
   .stage { grid-area: stage; min-width: 0; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
   canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; outline: 1px solid var(--rule); background: var(--cytoplasm); }
   .panel { grid-area: panel; min-width: 0; display: grid; gap: 10px; align-content: start; }
@@ -136,57 +140,63 @@
 
 <div class="app">
   <header class="bar">
-    <h1>Aktin am Lamellipodium</h1>
-    <button id="tour-start" class="tour-start" type="button">Geführte Tour</button>
-    <a class="more" href="#about">Worum es geht ↓</a>
+    <h1 data-i18n="page.title">Aktin am Lamellipodium</h1>
+    <button id="tour-start" class="tour-start" type="button" data-i18n="tour.start">Geführte Tour</button>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
   </header>
-  <section class="stage" aria-label="Lamellipodium">
-    <canvas id="stage" role="img" aria-label="Aktinnetz hinter der Plasmamembran an der Vorderkante der Zelle"></canvas>
+  <section class="stage" aria-label="Lamellipodium" data-i18n-aria="stage.aria">
+    <canvas id="stage" role="img" aria-label="Aktinnetz hinter der Plasmamembran an der Vorderkante der Zelle" data-i18n-aria="canvas.aria"></canvas>
   </section>
-  <aside class="panel" aria-label="Steuerung und Erläuterung">
-    <p class="rotate-hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
+  <aside class="panel" aria-label="Steuerung und Erläuterung" data-i18n-aria="panel.aria">
+    <p class="rotate-hint" data-i18n="rotate.hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
     <div class="tour" id="tour" hidden aria-live="polite">
       <div class="tour-head"><h2 id="tour-title"></h2><span class="tour-state" id="tour-state"></span><span class="tour-progress" id="tour-progress"></span></div>
       <p id="tour-text"></p>
       <div class="buttons">
-        <button id="tour-back" type="button">Zurück</button>
+        <button id="tour-back" type="button" data-i18n="tour.back">Zurück</button>
         <button id="tour-next" type="button">Weiter</button>
-        <button id="tour-exit" type="button">Tour beenden</button>
+        <button id="tour-exit" type="button" data-i18n="tour.exit">Tour beenden</button>
       </div>
     </div>
-    <section class="controls" aria-label="Steuerung">
+    <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
       <div class="buttons">
         <button id="play" class="primary" type="button">Pause</button>
-        <button id="step" type="button">Einzelschritt</button>
-        <button id="reset" type="button">Neu starten</button>
+        <button id="step" type="button" data-i18n="step">Einzelschritt</button>
+        <button id="reset" type="button" data-i18n="reset">Neu starten</button>
       </div>
-      <label class="speed" for="speed"><span>Tempo <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
+      <label class="speed" for="speed"><span><span data-i18n="speed">Tempo</span> <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
       <fieldset>
-        <legend>Proteine</legend>
-        <label><input id="arp23" type="checkbox" checked> Arp2/3 (Verzweigung)</label>
-        <label><input id="capping" type="checkbox" checked> Capping-Protein</label>
-        <label><input id="cofilin" type="checkbox" checked> Cofilin</label>
+        <legend data-i18n="proteins">Proteine</legend>
+        <label><input id="arp23" type="checkbox" checked> <span data-i18n="protein.arp23">Arp2/3 (Verzweigung)</span></label>
+        <label><input id="capping" type="checkbox" checked> <span data-i18n="protein.capping">Capping-Protein</span></label>
+        <label><input id="cofilin" type="checkbox" checked> <span data-i18n="protein.cofilin">Cofilin</span></label>
       </fieldset>
     </section>
     <div class="legend">
-      <span style="--c: var(--atp)">ATP-Aktin</span>
-      <span style="--c: var(--adppi)">ADP-Pi-Aktin</span>
-      <span style="--c: var(--adp)">ADP-Aktin</span>
-      <span style="--c: var(--arp)">Arp2/3 (Verzweigung)</span>
-      <span style="--c: var(--capping)">Capping-Protein</span>
-      <span class="tip">wachsendes Plus-Ende</span>
-      <span style="--c: var(--membrane)">Plasmamembran</span>
+      <span data-i18n="legend.atp" style="--c: var(--atp)">ATP-Aktin</span>
+      <span data-i18n="legend.adppi" style="--c: var(--adppi)">ADP-Pi-Aktin</span>
+      <span data-i18n="legend.adp" style="--c: var(--adp)">ADP-Aktin</span>
+      <span data-i18n="legend.arp" style="--c: var(--arp)">Arp2/3 (Verzweigung)</span>
+      <span data-i18n="legend.capping" style="--c: var(--capping)">Capping-Protein</span>
+      <span data-i18n="legend.tip" class="tip">wachsendes Plus-Ende</span>
+      <span data-i18n="legend.membrane" style="--c: var(--membrane)">Plasmamembran</span>
     </div>
     <div class="readout" id="readout"></div>
     <div class="note" aria-live="polite"><h2 id="note-title"></h2><p id="note-text"></p></div>
   </aside>
 </div>
 <section class="about" id="about">
-  <h2>Worum es geht</h2>
-  <p class="lede">Aufsicht auf die Vorderkante einer kriechenden Zelle. An den Plus-Enden lagert sich ATP-Aktin an und schiebt die Membran nach vorne. Hinten im Netz zerfallen die gealterten ADP-Filamente; die Monomere kehren in den Pool zurück und werden wieder vorne eingebaut.</p>
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Aufsicht auf die Vorderkante einer kriechenden Zelle. An den Plus-Enden lagert sich ATP-Aktin an und schiebt die Membran nach vorne. Hinten im Netz zerfallen die gealterten ADP-Filamente; die Monomere kehren in den Pool zurück und werden wieder vorne eingebaut.</p>
   <footer>
-    <p>Schematisch und stark beschleunigt: die Reihenfolge der Ereignisse stimmt, ihre Geschwindigkeit nicht. In der Zelle wird ATP etwa 2 s nach dem Einbau hydrolysiert, Phosphat wird erst nach Minuten frei (Halbwertszeit etwa 350 s); Fischkeratozyten kriechen mit etwa 10 µm/min.</p>
-    <p>Werte: Verzweigungswinkel 70° (Mullins et al. 1998), Untereinheit 2.7 nm, kritische Konzentration Plus-Ende 0.12 µM, Minus-Ende 0.6 µM (Pollard 1986), Pollard &amp; Borisy 2003.</p>
+    <p data-i18n="about.scale">Schematisch und stark beschleunigt: die Reihenfolge der Ereignisse stimmt, ihre Geschwindigkeit nicht. In der Zelle wird ATP etwa 2 s nach dem Einbau hydrolysiert, Phosphat wird erst nach Minuten frei (Halbwertszeit etwa 350 s); Fischkeratozyten kriechen mit etwa 10 µm/min.</p>
+    <p data-i18n="about.values">Werte: Verzweigungswinkel 70° (Mullins et al. 1998), Untereinheit 2.7 nm, kritische Konzentration Plus-Ende 0.12 µM, Minus-Ende 0.6 µM (Pollard 1986), Pollard &amp; Borisy 2003.</p>
+    <p class="license" data-i18n-html="license"></p>
   </footer>
 </section>
 <script>

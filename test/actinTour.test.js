@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Tour } from "../src/tour.js";
 import { Scene } from "../src/scene.js";
 import { ACTIN_TOUR } from "../src/actinTour.js";
+import { STRINGS } from "../src/strings.js";
 
 const MAX_TICKS = 20000;
 
@@ -20,16 +21,18 @@ function waitAt(index) {
   return { tour, scene };
 }
 
-const stepNamed = (title) => {
-  const i = ACTIN_TOUR.findIndex((s) => s.title === title);
-  assert.ok(i >= 0, title);
+const stepWithId = (id) => {
+  const i = ACTIN_TOUR.findIndex((s) => s.id === id);
+  assert.ok(i >= 0, id);
   return i;
 };
+// the labels of a step's highlights, lens notes included
+const labelsOf = (highlights) => highlights.flatMap((h) => [h.label, ...labelsOf(h.notes ?? [])]).filter(Boolean);
 const growingEnds = (scene) => scene.cell().filaments().filter((f) => !f.isCapped()).length;
 
 describe("ActinTourSpecification", () => {
   ACTIN_TOUR.forEach((step, i) => {
-    test(`ShouldReachTheEventOfStep_${i + 1}_${step.title.replace(/\W+/g, "")}`, () => {
+    test(`ShouldReachTheEventOfStep_${i + 1}_${step.id}`, () => {
       // GIVEN / WHEN
       const { tour } = waitAt(i);
       // THEN
@@ -39,35 +42,35 @@ describe("ActinTourSpecification", () => {
 
   test("ShouldPushTheMembraneDuringThePolymerizationStep", () => {
     // GIVEN / WHEN
-    const { scene } = waitAt(stepNamed("Polymerisation schiebt die Membran"));
+    const { scene } = waitAt(stepWithId("push"));
     // THEN
     assert.ok(scene.advanceSinceMark() > 0);
   });
 
   test("ShouldStopOnANewBranchInTheArp23Step", () => {
     // GIVEN / WHEN
-    const { scene } = waitAt(stepNamed("Arp2/3: ein neues Plus-Ende"));
+    const { scene } = waitAt(stepWithId("arp23"));
     // THEN
     assert.equal(scene.branchSinceMark()?.filament.isBranch(), true);
   });
 
   test("ShouldStopOnACappedEndInTheCappingStep", () => {
     // GIVEN / WHEN
-    const { scene } = waitAt(stepNamed("Capping-Protein"));
+    const { scene } = waitAt(stepWithId("capping"));
     // THEN
     assert.equal(scene.capSinceMark()?.filament.hasCappingProtein(), true);
   });
 
   test("ShouldStopOnACutInTheCofilinStep", () => {
     // GIVEN / WHEN
-    const { scene } = waitAt(stepNamed("Cofilin"));
+    const { scene } = waitAt(stepWithId("cofilin"));
     // THEN
     assert.ok(scene.severSinceMark() !== null);
   });
 
   test("ShouldLoseGrowingEndsWithoutArp23", () => {
     // GIVEN
-    const without = waitAt(stepNamed("Ohne Arp2/3")).scene;
+    const without = waitAt(stepWithId("noArp23")).scene;
     // WHEN
     const normal = Scene.empty();
     normal.reset(11, 600 + without.sinceMark(), { arp23: true, capping: true, cofilin: true, latrunculin: false, phalloidin: false });
@@ -80,21 +83,21 @@ describe("ActinTourSpecification", () => {
     const grown = Scene.empty();
     grown.reset(11, 600, { arp23: true, capping: true, cofilin: true, latrunculin: false, phalloidin: false });
     // WHEN
-    const { scene } = enter(stepNamed("Ohne Arp2/3"));
+    const { scene } = enter(stepWithId("noArp23"));
     // THEN
     assert.deepEqual([scene.cell().membraneX(), scene.cell().treatment().arp23], [grown.cell().membraneX(), false]);
   });
 
   test("ShouldWaitUntilNoPlusEndGrowsWithoutArp23", () => {
     // GIVEN / WHEN
-    const { scene } = waitAt(stepNamed("Ohne Arp2/3"));
+    const { scene } = waitAt(stepWithId("noArp23"));
     // THEN
     assert.equal(scene.growingEnds(), 0);
   });
 
   test("ShouldLabelTheFrontDifferentlyOnceNoPlusEndGrows", () => {
     // GIVEN
-    const step = stepNamed("Ohne Arp2/3");
+    const step = stepWithId("noArp23");
     const atStart = enter(step).tour.highlights()[0].label;
     // WHEN
     const atEnd = waitAt(step).tour.highlights()[0].label;
@@ -102,10 +105,13 @@ describe("ActinTourSpecification", () => {
     assert.notEqual(atStart, atEnd);
   });
 
-  test("ShouldWriteEveryStepInSwissGermanWithoutEszett", () => {
-    // GIVEN / WHEN
-    const flawed = ACTIN_TOUR.filter((s) => /ß/.test(s.title + s.text) || !s.text);
+  test("ShouldFindEveryTourTextInTheDictionary", () => {
+    // GIVEN
+    const keysOf = (step, scene) => [step.title, step.text, ...labelsOf(step.highlights(scene))];
+    // WHEN
+    const missing = ACTIN_TOUR.flatMap((step, i) => [...keysOf(step, enter(i).scene), ...keysOf(step, waitAt(i).scene)]).filter((key) => !STRINGS.de[key]);
     // THEN
-    assert.deepEqual(flawed, []);
+    assert.deepEqual([...new Set(missing)], []);
   });
+
 });
