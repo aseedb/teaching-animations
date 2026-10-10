@@ -81,7 +81,7 @@ function draw() {
   const Y = (y) => h / 2 - y * scale;
   const bandTop = Y(HALF_HEIGHT_NM);
   const bandBottom = Y(-HALF_HEIGHT_NM);
-  const font = Math.max(12, Math.round(w / 70));
+  const font = Math.max(10, Math.round(w / 70)); // grows with the canvas, so the layout keeps its proportions
 
   ctx.fillStyle = c.cytoplasm;
   ctx.fillRect(0, 0, w, h);
@@ -111,8 +111,12 @@ function draw() {
     ctx.fillText(text, x, h - font * 0.8);
   };
   if (!tour) drawExplanation(ctx, h, c, font);
-  caption("← älter: ADP, Abbau, Monomere zurück in den Pool", 10, "left");
-  caption("Plus-Enden zur Membran →", X(m) - 10, "right");
+  // the long caption only where both fit side by side
+  const rear = ["← älter: ADP, Abbau, Monomere zurück in den Pool", "← älter: ADP, Abbau"];
+  const front = "Plus-Enden zur Membran →";
+  const room = X(m) - 20 - ctx.measureText(front).width - font * 2;
+  caption(rear.find((t) => ctx.measureText(t).width <= room) ?? rear.at(-1), 10, "left");
+  caption(front, X(m) - 10, "right");
   if (FILM) drawFilmLegend(ctx, w, h, c, font);
   if (tour && !tour.isOver()) {
     targets = resolveTargets({ X, Y, m, scale, h, font });
@@ -355,14 +359,19 @@ function drawLens(ctx, c, font, w, h, hl) {
   const m = cell.membraneX();
   const X = (x) => (x - (m - VIEW_BEHIND_NM)) * scale;
   const Y = (y) => h / 2 - y * scale;
-  const R = { x: w * 0.03, y: h * 0.16, w: w * 0.42, h: h * 0.6 };
-  const zs = scale * LENS_ZOOM;
+  // on small canvases the labels keep a 10 px floor: the lens and its zoom grow with them, so the
+  // annotations keep the proportions they have at full size
+  const k = Math.max(1, (10 * 70) / w);
+  const zoom = LENS_ZOOM * k;
+  const R = { x: w * 0.03, w: Math.min(w * 0.42 * k, w * 0.66), h: Math.min(h * 0.6 * k, h * 0.92) };
+  R.y = Math.min(h * 0.16, h - R.h - h * 0.03);
+  const zs = scale * zoom;
   const LX = (x) => R.x + R.w / 2 + (x - centre.x) * zs;
   const LY = (y) => R.y + R.h / 2 - (y - centre.y) * zs;
   const reach = Math.max(R.w, R.h) / zs;
   const near = (f) => [f.pointedEnd(), f.barbedTip()].some((q) => Math.hypot(q.x - centre.x, intoBand(q.y) - centre.y) < reach * 1.2) || f.subunitCount() * 2.7 > reach;
   // source frame on the main view and the lines joining it to the inset
-  const sw = R.w / LENS_ZOOM, sh = R.h / LENS_ZOOM;
+  const sw = R.w / zoom, sh = R.h / zoom;
   const sx = X(centre.x) - sw / 2, sy = Y(centre.y) - sh / 2;
   ctx.strokeStyle = c.highlight; ctx.lineWidth = 2;
   ctx.strokeRect(sx, sy, sw, sh);
@@ -375,7 +384,7 @@ function drawLens(ctx, c, font, w, h, hl) {
   drawNetwork(ctx, c, { X: LX, Y: LY, scale: zs, clip: R, membraneX: m, near, focus, lineScale: zs * 0.45 });
   ctx.strokeStyle = c.highlight; ctx.lineWidth = 3;
   ctx.strokeRect(R.x, R.y, R.w, R.h);
-  labelAt(ctx, c, font, `Lupe (${LENS_ZOOM}×)`, R.x + 8, R.y + font * 1.3, "left");
+  labelAt(ctx, c, font, `Lupe (${Math.round(zoom)}×)`, R.x + 8, R.y + font * 1.3, "left");
   // annotations inside the lens
   const local = {};
   for (const [name, q] of Object.entries(world)) if (Number.isFinite(q?.x)) local[name] = { x: LX(q.x), y: LY(q.y), r: font * 0.9, inLens: R, angle: q.angle };
@@ -385,12 +394,18 @@ function drawLens(ctx, c, font, w, h, hl) {
   ctx.restore();
 }
 
-function labelAt(ctx, c, font, text, x, y, align = "center") {
+// a label on a light box; `bounds` keeps the whole box inside a frame (the lens, the canvas)
+function labelAt(ctx, c, font, text, x, y, align = "center", bounds = null) {
   if (!text) return;
   ctx.font = fontOf(font, true);
   ctx.textAlign = align;
   const tw = ctx.measureText(text).width;
-  const left = align === "center" ? x - tw / 2 : align === "left" ? x : x - tw;
+  const natural = align === "center" ? x - tw / 2 : align === "left" ? x : x - tw;
+  const shift = bounds ? Math.max(bounds.x + 8 - natural, Math.min(0, bounds.x + bounds.w - 8 - (natural + tw))) : 0;
+  const lift = bounds ? Math.max(bounds.y + font * 1.1 - y, Math.min(0, bounds.y + bounds.h - font * 0.5 - y)) : 0;
+  const left = natural + shift;
+  x += shift;
+  y += lift;
   ctx.fillStyle = c.surface;
   ctx.globalAlpha = 0.92;
   ctx.fillRect(left - 6, y - font * 1.05, tw + 12, font * 1.45);
@@ -427,7 +442,8 @@ const ARROW_FROM = {
 
 function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, map) {
   const stroke = () => { ctx.strokeStyle = c.highlight; ctx.lineWidth = width; };
-  const label = (...args) => { if (withLabels) labelAt(ctx, c, font, ...args); };
+  const frame = { x: 0, y: 0, w, h };
+  const label = (text, x, y, align, t) => { if (withLabels) labelAt(ctx, c, font, text, x, y, align, t?.inLens ?? frame); };
   stroke();
   for (const hl of highlights) {
     const t = map[hl.target];
@@ -439,8 +455,8 @@ function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, ma
         else ctx.arc(t.x, t.y, t.r + 6, 0, Math.PI * 2);
         ctx.stroke();
         const r = t.ry ?? t.r;
-        if ((hl.labelSide ?? t.labelSide) === "left") label(hl.label, t.x - (t.rx ?? r) - font, t.y + font * 0.35, "right");
-        else label(hl.label, Math.min(Math.max(t.x, font * 8), w - font * 8), Math.max(font * 1.4, t.y - r - font * 0.6));
+        if ((hl.labelSide ?? t.labelSide) === "left") label(hl.label, t.x - (t.rx ?? r) - font, t.y + font * 0.35, "right", t);
+        else label(hl.label, t.x, Math.max(font * 1.4, t.y - r - font * 0.6), "center", t);
       },
       arrow: () => {
         const left = t.inLens ? t.x > t.inLens.x + t.inLens.w * 0.45 : t.x > w * 0.5;
@@ -452,7 +468,7 @@ function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, ma
         arrowHead(ctx, c, font, sx, sy, ex, ey);
         // a small circle around what the arrow points at, like a callout
         if ((t.r ?? 0) >= 6) { ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2); ctx.stroke(); }
-        label(hl.label, sx, sy + font * place.labelDy, place.align);
+        label(hl.label, sx, sy + font * place.labelDy, place.align, t);
       },
       cut: () => {
         // the gap cofilin opened, across the filament (screen y points down)
@@ -469,7 +485,7 @@ function drawHighlightPass(ctx, c, font, w, h, highlights, width, withLabels, ma
         const cy = t.y + font * 3;
         ctx.beginPath(); ctx.moveTo(t.x0, t.y); ctx.quadraticCurveTo(midX, cy, t.x1, t.y); ctx.stroke();
         arrowHead(ctx, c, font, midX, cy, t.x1, t.y);
-        label(hl.label, midX, t.y - font * 0.6);
+        label(hl.label, midX, t.y - font * 0.6, "center", t);
       },
     };
     kinds[hl.type]?.();
@@ -630,6 +646,15 @@ $("tour-start").addEventListener("click", startTour);
 $("tour-next").addEventListener("click", () => { tour.next(); if (tour.isOver()) endTour(); else showTourStep(); });
 $("tour-back").addEventListener("click", () => { tour.back(); showTourStep(); });
 $("tour-exit").addEventListener("click", endTour);
+// side by side (landscape): the canvas is as wide as the stage allows while its 16:9 frame fits the
+// stage's height; stacked (portrait): it takes the full width
+const SIDE_BY_SIDE = "(min-aspect-ratio: 5/4) and (min-width: 640px)";
+function fitCanvas() {
+  const canvas = $("stage");
+  const box = canvas.parentElement;
+  canvas.style.width = matchMedia(SIDE_BY_SIDE).matches ? `${Math.floor(Math.min(box.clientWidth, (box.clientHeight * 16) / 9))}px` : "";
+}
+if (!FILM) new ResizeObserver(() => { fitCanvas(); draw(); }).observe($("stage").parentElement);
 window.addEventListener("resize", draw);
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("speed").value = 3;
 showSpeed();
