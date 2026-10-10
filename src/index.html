@@ -75,18 +75,20 @@
   }
 
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.5; }
-  .page { max-width: 1280px; margin: 0 auto; padding: 20px 20px 40px; display: grid; gap: 16px; }
-  .page > * { min-width: 0; }
-  header { display: grid; gap: 6px; }
-  h1 { margin: 0; font-size: clamp(1.7rem, 3.2vw, 2.4rem); line-height: 1.1; letter-spacing: -0.01em; text-wrap: balance; }
-  .lede { margin: 0; color: var(--ink-soft); max-width: 72ch; font-size: 1.05rem; }
-
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+  /* the app fills one screen: controls on top, the two drawings side by side (stacked on upright screens), the region note below */
+  .app { max-width: 1680px; margin: 0 auto; padding: 10px 16px 16px; display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+  .app > * { min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+  h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; flex: 1 1 auto; }
+  .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
   .controls {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
     background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
     box-shadow: 0 6px 16px -12px rgb(0 0 0 / 0.35);
-    padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px;
+    padding: 8px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px;
   }
   .length { display: grid; gap: 2px; flex: 1 1 280px; min-width: 0; }
   .length-label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.95rem; }
@@ -100,11 +102,6 @@
   .options label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
   .options label[aria-disabled="true"] { color: var(--ink-soft); cursor: not-allowed; }
   select { font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); }
-
-  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 16px; }
-  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: grid; gap: 10px; min-width: 0; align-content: start; }
-  .panel h2 { margin: 0; font-size: 1.1rem; line-height: 1.25; }
-  canvas { display: block; width: 100%; max-width: 100%; background: var(--stage); border-radius: 6px; }
   #sarcomere { aspect-ratio: 560 / 300; }
   #curve { aspect-ratio: 560 / 320; }
   .readout { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.92rem; color: var(--ink-soft); }
@@ -117,20 +114,44 @@
   .legend .dashed::before { background: repeating-linear-gradient(90deg, var(--c) 0 4px, transparent 4px 7px); }
   footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 90ch; }
   footer p { margin: 0 0 4px; }
+  .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr)); gap: 10px 16px; min-height: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+  .panel h2 { margin: 0; font-size: 1rem; line-height: 1.25; }
+  .canvas-box { min-width: 0; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
+  canvas { display: block; width: 100%; max-width: 100%; background: var(--stage); border-radius: 6px; }
+  .about { max-width: 1680px; margin: 0 auto; padding: 8px 16px 32px; display: grid; gap: 8px; }
+  .about h2 { margin: 0; font-size: 1.1rem; }
+  .lede { margin: 0; max-width: 85ch; }
+  /* screens big enough: everything in one screen, natural rows centred, the drawings sized by the script to the height left */
+  @media (min-width: 640px) and (min-height: 420px) {
+    .app { min-height: 100vh; min-height: 100dvh; align-content: center; gap: 8px; }
+    h1 { font-size: clamp(1.2rem, 2vw, 1.8rem); }
+    .controls { position: static; box-shadow: none; padding: 6px 12px; gap: 6px 18px; }
+    .length { flex-basis: 220px; }
+    .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .panel { background: none; border: 0; padding: 0; gap: 4px; }
+    .panel h2 { font-size: 0.92rem; color: var(--ink-soft); }
+    .legend { font-size: 0.82rem; gap: 2px 12px; }
+    .app > .region { min-height: calc(3 * 1.45em + 16px); padding: 8px 12px; }
+    .app > .region h3, .app > .region p { display: inline; }
+    .app > .region h3::after { content: ". "; }
+  }
+  @media (min-width: 900px) and (min-height: 420px) { .app > .region { min-height: calc(2 * 1.45em + 16px); } } /* wide enough for any note in two lines */
+  @media (min-width: 640px) and (min-height: 420px) and (max-aspect-ratio: 1/1) {
+    .panels { grid-template-columns: minmax(0, 1fr); }
+  }
   @media (max-width: 600px) {
-    .page { padding-inline: 16px; }
     #sarcomere { aspect-ratio: 4 / 3.4; }
     .controls { gap: 8px 14px; padding: 8px 10px; }
     button { padding: 6px 10px; }
   }
 </style>
 
-<div class="page">
-  <header>
+<div class="app">
+  <header class="bar">
     <h1>Sarkomer: Länge, Bänder und Kraft</h1>
-    <p class="lede">Ziehen Sie am Regler oder spielen Sie eine Kontraktion ab. Die Filamente gleiten aneinander vorbei, ohne sich zu verkürzen: die A-Bande bleibt gleich lang, I-Bande und H-Zone verändern sich. Die Kraft hängt davon ab, wie viele Myosinköpfe ein Aktinfilament erreichen.</p>
+    <a class="more" href="#about">Worum es geht ↓</a>
   </header>
-
   <section class="controls" aria-label="Steuerung">
     <div class="length">
       <div class="length-label"><label for="length">Sarkomerlänge</label><output id="length-out" for="length">2.40 µm</output></div>
@@ -146,11 +167,10 @@
       <label><input id="bridges" type="checkbox" checked> Querbrücken</label>
     </div>
   </section>
-
   <div class="panels">
     <section class="panel" aria-labelledby="h-sarc">
       <h2 id="h-sarc">Sarkomer (Z-Scheibe bis Z-Scheibe)</h2>
-      <canvas id="sarcomere" role="img" aria-label="Schema eines Sarkomers mit Aktin, Myosin, Z-Scheiben und den Bändern"></canvas>
+      <div class="canvas-box"><canvas id="sarcomere" role="img" aria-label="Schema eines Sarkomers mit Aktin, Myosin, Z-Scheiben und den Bändern"></canvas></div>
       <div class="readout" id="bands"></div>
       <div class="legend">
         <span style="--c: var(--actin)">Aktin (dünne Filamente)</span>
@@ -160,25 +180,26 @@
         <span style="--c: var(--titin-taut)" id="legend-titin-taut">Titin gespannt</span>
       </div>
     </section>
-
     <section class="panel" aria-labelledby="h-curve">
       <h2 id="h-curve">Kraft-Längen-Kurve</h2>
-      <canvas id="curve" role="img" aria-label="Aktive Kraft in Prozent des Maximums als Funktion der Sarkomerlänge"></canvas>
+      <div class="canvas-box"><canvas id="curve" role="img" aria-label="Aktive Kraft in Prozent des Maximums als Funktion der Sarkomerlänge"></canvas></div>
       <div class="readout" id="forces"></div>
-      <div class="region" aria-live="polite"><h3 id="region-title"></h3><p id="region-text"></p></div>
       <div class="legend">
         <span style="--c: var(--curve)">aktive Kraft</span>
         <span class="dashed" style="--c: var(--passive)" id="legend-passive">passive Spannung (Titin, schematisch)</span>
       </div>
     </section>
   </div>
-
+  <div class="region" aria-live="polite"><h3 id="region-title"></h3><p id="region-text"></p></div>
+</div>
+<section class="about" id="about">
+  <h2>Worum es geht</h2>
+  <p class="lede">Ziehen Sie am Regler oder spielen Sie eine Kontraktion ab. Die Filamente gleiten aneinander vorbei, ohne sich zu verkürzen: die A-Bande bleibt gleich lang, I-Bande und H-Zone verändern sich. Die Kraft hängt davon ab, wie viele Myosinköpfe ein Aktinfilament erreichen.</p>
   <footer>
     <p id="species-note"></p>
     <p>Plateau und absteigender Ast folgen aus der Geometrie der Filamente (Gleitfilament-Prinzip). Der aufsteigende Ast und die Titinkurve sind schematisch. Daten: Frosch: Gordon, Huxley &amp; Julian 1966; Page &amp; Huxley 1963. Kaninchen (M. psoas): Castillo et al. 2009; Herzog 2018.</p>
   </footer>
-</div>
-
+</section>
 <script>
 /* APP_SCRIPT */
 </script>

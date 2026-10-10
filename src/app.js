@@ -292,9 +292,36 @@ function playTo(target) {
 $("length").addEventListener("input", (e) => { state.target = null; state.length = Number(e.target.value); render(); });
 $("contract").addEventListener("click", () => playTo(CONTRACTED));
 $("stretch").addEventListener("click", () => playTo(STRETCHED));
-$("species").addEventListener("change", (e) => { state.species = e.target.value; render(); });
-$("titin").addEventListener("change", (e) => { state.titin = e.target.checked; render(); });
+$("species").addEventListener("change", (e) => { state.species = e.target.value; render(); fitCanvases(); render(); });
+$("titin").addEventListener("change", (e) => { state.titin = e.target.checked; render(); fitCanvases(); render(); });
 $("bridges").addEventListener("change", (e) => { state.bridges = e.target.checked; render(); });
-window.addEventListener("resize", render);
+// screens big enough to show everything at once: the drawings as large as the height left by the other
+// rows allows, keeping their proportions; smaller screens: full width, the page scrolls
+const FITTED = "(min-width: 640px) and (min-height: 420px)";
+const ASPECT = { sarcomere: 560 / 300, curve: 560 / 320 };
+function fitCanvases() {
+  const canvases = Object.keys(ASPECT).map($);
+  if (!matchMedia(FITTED).matches) { canvases.forEach((c) => { c.style.width = ""; c.style.height = ""; }); return; }
+  const app = document.querySelector(".app");
+  const style = getComputedStyle(app);
+  const outer = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 3 * parseFloat(style.rowGap);
+  const rows = [".bar", ".controls", ".app > .region"].reduce((sum, sel) => sum + document.querySelector(sel).offsetHeight, 0);
+  const panels = [...document.querySelectorAll(".panel")];
+  const stacked = panels[1].offsetTop > panels[0].offsetTop + 10;
+  const extras = panels.map((p, i) => p.offsetHeight - canvases[i].offsetHeight);
+  const panelGap = parseFloat(getComputedStyle(document.querySelector(".panels")).rowGap);
+  const height = stacked
+    ? (window.innerHeight - outer - rows - extras[0] - extras[1] - panelGap) / 2
+    : window.innerHeight - outer - rows - Math.max(...extras);
+  canvases.forEach((c) => {
+    const width = Math.floor(Math.max(200, Math.min(c.parentElement.clientWidth, height * ASPECT[c.id])));
+    c.style.width = `${width}px`;
+    c.style.height = `${Math.floor(width / ASPECT[c.id])}px`;
+  });
+}
+function relayout() { fitCanvases(); render(); }
+window.addEventListener("resize", relayout);
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
 render();
+relayout(); // the legend and the note are in place now: size the drawings
+document.fonts?.ready.then(relayout);
