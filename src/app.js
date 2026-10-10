@@ -66,6 +66,16 @@ function draw() {
   drawZoom(ctx, c, font, pad, w, h * 0.3, h * 0.36);
   drawPlot(ctx, c, font, pad, w, h * 0.72, h * 0.25);
   if (tour && !tour.isOver()) drawHighlights(ctx, c, font, w, h, tour.highlights());
+  if (FILM) drawFilmCredit(ctx, c, font, w, h);
+}
+
+// the licence in a corner of the film frame (the page states it below the animation)
+function drawFilmCredit(ctx, c, font, w, h) {
+  ctx.font = fontOf(Math.round(font * 0.65));
+  ctx.fillStyle = c["ink-soft"];
+  ctx.textAlign = "right";
+  ctx.fillText("© Benoît Zuber, Universität Bern · CC BY 4.0", w - 8, h - 6);
+  ctx.font = fontOf(font);
 }
 
 // band 1: the whole microtubule from centrosome to cell edge
