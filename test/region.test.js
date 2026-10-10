@@ -2,7 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { Species } from "../src/species.js";
 import { Sarcomere } from "../src/sarcomere.js";
-import { REGIONS, explain } from "../src/region.js";
+import { REGIONS } from "../src/region.js";
 
 const anyBetween = (lo, hi) => lo + Math.random() * (hi - lo);
 const SPECIES = [Species.rabbit(), Species.frog()];
@@ -45,14 +45,5 @@ describe("RegionSpecification", () => {
     const region = regionAt(species, Sarcomere.landmarks(species).zeroForce);
     // THEN
     assert.equal(region, "keineUeberlappung");
-  });
-
-  test("ShouldExplainEveryRegionInSwissGermanWithoutEszett", () => {
-    // GIVEN
-    const texts = REGIONS.map(explain);
-    // WHEN
-    const flawed = texts.filter((t) => !t || !t.title || !t.text || /ß/.test(t.title + t.text));
-    // THEN
-    assert.deepEqual(flawed, []);
   });
 });

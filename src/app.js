@@ -2,7 +2,8 @@
 
 import { Species } from "./species.js";
 import { Sarcomere } from "./sarcomere.js";
-import { explain } from "./region.js";
+import { pickLanguage, translator, translatePage, readStoredLanguage, storeLanguage, decimals } from "./i18n.js";
+import { STRINGS } from "./strings.js";
 
 const MIN_LENGTH = 1.2;
 const MAX_LENGTH = 4.3;
@@ -10,13 +11,14 @@ const SPEED = 0.45; // µm per second during playback
 const CONTRACTED = 1.6;
 const STRETCHED = 4.0;
 const SPECIES = { rabbit: Species.rabbit(), frog: Species.frog() };
-const SPECIES_NOTE = {
-  rabbit: "Kaninchen (M. psoas): Aktinfilament 1.13 µm, Myosinfilament 1.65 µm. Optimale Länge 2.26 bis 2.46 µm; Titin beginnt ab etwa 2.65 µm passive Spannung zu tragen.",
-  frog: "Frosch (M. semitendinosus): die klassische Messung von Gordon, Huxley und Julian (1966). Plateau 2.05 bis 2.2 µm, keine aktive Kraft mehr ab 3.65 µm. Titin wird gezeigt, für den Frosch ist hier aber keine Kurve der passiven Spannung hinterlegt.",
-};
 
 const $ = (id) => document.getElementById(id);
-const fmt = (v) => v.toFixed(2);
+// the page's language (see i18n.js): `t` gives a text, `fmt` a length with two decimals, in that language
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let lang = pickLanguage({ hash: location.hash, stored: readStoredLanguage(storage), browser: navigator.languages ?? [navigator.language] });
+let t = translator(STRINGS, lang);
+let num = decimals(lang);
+const fmt = (v) => num(v, 2);
 
 function palette() {
   const style = getComputedStyle(document.documentElement);
@@ -166,10 +168,10 @@ function drawSarcomere(canvas, sarcomere, opts) {
 
   const bands = sarcomere.bands();
   const yBand = rows[4] + 34;
-  drawBracket(ctx, X(ta), X(tb), yBand, [`A-Bande ${fmt(bands.aBand)} µm`, "A-Bande", "A"], c.band);
+  drawBracket(ctx, X(ta), X(tb), yBand, [`${t("band.a")} ${fmt(bands.aBand)} µm`, t("band.a"), "A"], c.band);
   if (bands.hZone > 0) {
     const half = Math.min(bands.hZone, tb - ta) / 2;
-    drawBracket(ctx, X(-half), X(half), yBand + 30, [`H-Zone ${fmt(bands.hZone)} µm`, "H-Zone", "H"], c.band);
+    drawBracket(ctx, X(-half), X(half), yBand + 30, [`${t("band.h")} ${fmt(bands.hZone)} µm`, t("band.h"), "H"], c.band);
   }
   if (bands.iBand > 0) {
     drawBracket(ctx, X(layout.zDiscs[0]), X(ta), yBand, ["½ I", "I"], c.band);
@@ -203,9 +205,9 @@ function drawCurve(canvas, species, length, opts) {
   ctx.textAlign = "center";
   for (let um = 1.5; um <= MAX_LENGTH; um += 0.5) {
     ctx.beginPath(); ctx.moveTo(X(um), h - pad.b); ctx.lineTo(X(um), h - pad.b + 4); ctx.stroke();
-    ctx.fillText(um.toFixed(1), X(um), h - pad.b + 17);
+    ctx.fillText(num(um, 1), X(um), h - pad.b + 17);
   }
-  ctx.fillText("Sarkomerlänge (µm)", (pad.l + w - pad.r) / 2, h - 4);
+  ctx.fillText(t("axis.length"), (pad.l + w - pad.r) / 2, h - 4);
 
   // curves
   const samples = 400;
@@ -255,14 +257,14 @@ function render() {
   const b = sarcomere.bands();
   $("length-out").textContent = `${fmt(state.length)} µm`;
   $("length").value = state.length;
-  $("bands").innerHTML = `<span>A-Bande <b>${fmt(b.aBand)} µm</b></span><span>I-Bande <b>${fmt(b.iBand)} µm</b></span><span>H-Zone <b>${fmt(b.hZone)} µm</b></span>`;
+  $("bands").innerHTML = `<span>${t("band.a")} <b>${fmt(b.aBand)} µm</b></span><span>${t("band.i")} <b>${fmt(b.iBand)} µm</b></span><span>${t("band.h")} <b>${fmt(b.hZone)} µm</b></span>`;
   const passive = sarcomere.passiveTension();
-  $("forces").innerHTML = `<span>aktive Kraft <b>${Math.round(sarcomere.activeForce() * 100)} %</b></span>` +
-    (titinCurve ? `<span>passive Spannung <b>${Math.round(passive * 100)} %</b></span>` : "");
-  const region = explain(sarcomere.region());
+  $("forces").innerHTML = `<span>${t("readout.active")} <b>${Math.round(sarcomere.activeForce() * 100)} %</b></span>` +
+    (titinCurve ? `<span>${t("readout.passive")} <b>${Math.round(passive * 100)} %</b></span>` : "");
+  const region = { title: t(`region.${sarcomere.region()}.title`), text: t(`region.${sarcomere.region()}.text`) };
   $("region-title").textContent = region.title;
   $("region-text").textContent = region.text;
-  $("species-note").textContent = SPECIES_NOTE[state.species];
+  $("species-note").textContent = t(`note.${state.species}`);
   $("legend-titin").hidden = !titin;
   $("legend-titin-taut").hidden = !titinCurve;
   $("legend-passive").hidden = !titinCurve;
@@ -322,6 +324,18 @@ function fitCanvases() {
 function relayout() { fitCanvases(); render(); }
 window.addEventListener("resize", relayout);
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+function setLanguage(next) {
+  lang = next;
+  t = translator(STRINGS, lang);
+  num = decimals(lang);
+  storeLanguage(storage, lang);
+  translatePage(document, t, lang);
+  render();
+  relayout();
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLanguage(b.dataset.lang)));
+
+translatePage(document, t, lang);
 render();
 relayout(); // the legend and the note are in place now: size the drawings
 document.fonts?.ready.then(relayout);

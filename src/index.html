@@ -84,6 +84,10 @@
   .bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
   h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; letter-spacing: -0.01em; text-wrap: balance; flex: 1 1 auto; }
   .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license a { color: inherit; }
   .controls {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2;
     background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
@@ -149,55 +153,61 @@
 
 <div class="app">
   <header class="bar">
-    <h1>Sarkomer: Länge, Bänder und Kraft</h1>
-    <a class="more" href="#about">Worum es geht ↓</a>
+    <h1 data-i18n="page.heading">Sarkomer: Länge, Bänder und Kraft</h1>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
   </header>
-  <section class="controls" aria-label="Steuerung">
+  <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
     <div class="length">
-      <div class="length-label"><label for="length">Sarkomerlänge</label><output id="length-out" for="length">2.40 µm</output></div>
+      <div class="length-label"><label for="length" data-i18n="length">Sarkomerlänge</label><output id="length-out" for="length">2.40 µm</output></div>
       <input id="length" type="range" min="1.2" max="4.3" step="0.01" value="2.4">
     </div>
     <div class="buttons">
-      <button id="contract" class="primary" type="button">Kontraktion abspielen</button>
-      <button id="stretch" type="button">Dehnen</button>
+      <button id="contract" class="primary" type="button" data-i18n="contract">Kontraktion abspielen</button>
+      <button id="stretch" type="button" data-i18n="stretch">Dehnen</button>
     </div>
     <div class="options">
-      <label>Art <select id="species"><option value="rabbit">Kaninchen</option><option value="frog">Frosch</option></select></label>
-      <label id="titin-label"><input id="titin" type="checkbox"> Titin</label>
-      <label><input id="bridges" type="checkbox" checked> Querbrücken</label>
+      <label><span data-i18n="species">Art</span> <select id="species"><option value="rabbit" data-i18n="species.rabbit">Kaninchen</option><option value="frog" data-i18n="species.frog">Frosch</option></select></label>
+      <label id="titin-label"><input id="titin" type="checkbox"> <span data-i18n="titin">Titin</span></label>
+      <label><input id="bridges" type="checkbox" checked> <span data-i18n="bridges">Querbrücken</span></label>
     </div>
   </section>
   <div class="panels">
     <section class="panel" aria-labelledby="h-sarc">
-      <h2 id="h-sarc">Sarkomer (Z-Scheibe bis Z-Scheibe)</h2>
-      <div class="canvas-box"><canvas id="sarcomere" role="img" aria-label="Schema eines Sarkomers mit Aktin, Myosin, Z-Scheiben und den Bändern"></canvas></div>
+      <h2 id="h-sarc" data-i18n="sarc.title">Sarkomer (Z-Scheibe bis Z-Scheibe)</h2>
+      <div class="canvas-box"><canvas id="sarcomere" role="img" aria-label="Schema eines Sarkomers mit Aktin, Myosin, Z-Scheiben und den Bändern" data-i18n-aria="sarc.aria"></canvas></div>
       <div class="readout" id="bands"></div>
       <div class="legend">
-        <span style="--c: var(--actin)">Aktin (dünne Filamente)</span>
-        <span style="--c: var(--myosin)">Myosin (dicke Filamente)</span>
-        <span style="--c: var(--bridge)">Querbrücken</span>
-        <span style="--c: var(--titin)" id="legend-titin">Titin (Z-Scheibe bis M-Linie), entspannt</span>
-        <span style="--c: var(--titin-taut)" id="legend-titin-taut">Titin gespannt</span>
+        <span data-i18n="legend.actin" style="--c: var(--actin)">Aktin (dünne Filamente)</span>
+        <span data-i18n="legend.myosin" style="--c: var(--myosin)">Myosin (dicke Filamente)</span>
+        <span data-i18n="legend.bridges" style="--c: var(--bridge)">Querbrücken</span>
+        <span data-i18n="legend.titin" style="--c: var(--titin)" id="legend-titin">Titin (Z-Scheibe bis M-Linie), entspannt</span>
+        <span data-i18n="legend.titinTaut" style="--c: var(--titin-taut)" id="legend-titin-taut">Titin gespannt</span>
       </div>
     </section>
     <section class="panel" aria-labelledby="h-curve">
-      <h2 id="h-curve">Kraft-Längen-Kurve</h2>
-      <div class="canvas-box"><canvas id="curve" role="img" aria-label="Aktive Kraft in Prozent des Maximums als Funktion der Sarkomerlänge"></canvas></div>
+      <h2 id="h-curve" data-i18n="curve.title">Kraft-Längen-Kurve</h2>
+      <div class="canvas-box"><canvas id="curve" role="img" aria-label="Aktive Kraft in Prozent des Maximums als Funktion der Sarkomerlänge" data-i18n-aria="curve.aria"></canvas></div>
       <div class="readout" id="forces"></div>
       <div class="legend">
-        <span style="--c: var(--curve)">aktive Kraft</span>
-        <span class="dashed" style="--c: var(--passive)" id="legend-passive">passive Spannung (Titin, schematisch)</span>
+        <span data-i18n="legend.active" style="--c: var(--curve)">aktive Kraft</span>
+        <span data-i18n="legend.passive" class="dashed" style="--c: var(--passive)" id="legend-passive">passive Spannung (Titin, schematisch)</span>
       </div>
     </section>
   </div>
   <div class="region" aria-live="polite"><h3 id="region-title"></h3><p id="region-text"></p></div>
 </div>
 <section class="about" id="about">
-  <h2>Worum es geht</h2>
-  <p class="lede">Ziehen Sie am Regler oder spielen Sie eine Kontraktion ab. Die Filamente gleiten aneinander vorbei, ohne sich zu verkürzen: die A-Bande bleibt gleich lang, I-Bande und H-Zone verändern sich. Die Kraft hängt davon ab, wie viele Myosinköpfe ein Aktinfilament erreichen.</p>
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Ziehen Sie am Regler oder spielen Sie eine Kontraktion ab. Die Filamente gleiten aneinander vorbei, ohne sich zu verkürzen: die A-Bande bleibt gleich lang, I-Bande und H-Zone verändern sich. Die Kraft hängt davon ab, wie viele Myosinköpfe ein Aktinfilament erreichen.</p>
   <footer>
     <p id="species-note"></p>
-    <p>Plateau und absteigender Ast folgen aus der Geometrie der Filamente (Gleitfilament-Prinzip). Der aufsteigende Ast und die Titinkurve sind schematisch. Daten: Frosch: Gordon, Huxley &amp; Julian 1966; Page &amp; Huxley 1963. Kaninchen (M. psoas): Castillo et al. 2009; Herzog 2018.</p>
+    <p data-i18n="about.sources">Plateau und absteigender Ast folgen aus der Geometrie der Filamente (Gleitfilament-Prinzip). Der aufsteigende Ast und die Titinkurve sind schematisch. Daten: Frosch: Gordon, Huxley &amp; Julian 1966; Page &amp; Huxley 1963. Kaninchen (M. psoas): Castillo et al. 2009; Herzog 2018.</p>
+    <p class="license" data-i18n-html="license"></p>
   </footer>
 </section>
 <script>
