@@ -4,6 +4,13 @@ import * as C from "./constants.js";
 import { Tissue } from "./tissue.js";
 import { ForceRamp } from "./forceRamp.js";
 import { filamentPath } from "./filamentShape.js";
+import { pickLanguage, translator, translatePage, readStoredLanguage, storeLanguage } from "./i18n.js";
+import { STRINGS } from "./strings.js";
+
+// the page's language: German, French or English (see i18n.js); `t` gives a text in that language
+const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+let lang = pickLanguage({ hash: location.hash, stored: readStoredLanguage(storage), browser: navigator.languages ?? [navigator.language] });
+let t = translator(STRINGS, lang);
 
 const SEED = 7;
 const ROWS = 3;
@@ -153,7 +160,7 @@ class CanvasPainter {
     ctx.strokeStyle = this.palette.clamp;
     ctx.lineWidth = 1;
     for (let y = yTop; y < yBottom; y += 9) this.#stroke(x - 10, y, x - 20, y + 9, this.palette.clamp, 1);
-    if (this.showLabels) this.#label("fixiert", x - 5, yTop - 8, this.palette["ink-soft"], "center");
+    if (this.showLabels) this.#label(t("canvas.fixed"), x - 5, yTop - 8, this.palette["ink-soft"], "center");
   }
 
   grip(x, yTop, yBottom) {
@@ -161,7 +168,7 @@ class CanvasPainter {
     ctx.fillStyle = this.palette.clamp;
     ctx.fillRect(x, yTop, 8, yBottom - yTop);
     this.#pullArrow(x + 8, (yTop + yBottom) / 2);
-    if (this.showLabels) this.#label("Zug", x + 4, yTop - 8, this.palette["ink-soft"], "center");
+    if (this.showLabels) this.#label(t("canvas.pull"), x + 4, yTop - 8, this.palette["ink-soft"], "center");
   }
 
   #pullArrow(x, y) {
@@ -222,7 +229,7 @@ class SheetView {
   #report({ rupturedCells, broken, elongation }) {
     const torn = rupturedCells > 0;
     this.#chip.dataset.state = torn ? "torn" : "intact";
-    this.#chip.textContent = torn ? `Zytolyse: ${rupturedCells} ${rupturedCells === 1 ? "Zelle" : "Zellen"}` : "intakt";
+    this.#chip.textContent = torn ? t(rupturedCells === 1 ? "chip.lysis.one" : "chip.lysis.many", { n: rupturedCells }) : t("chip.intact");
     this.#strain.textContent = `${Math.round(elongation * 100)} %`;
     this.#desmosomes.textContent = String(broken.desmosome);
   }
@@ -257,13 +264,11 @@ function renderAll() {
 function setPlaying(playing) {
   state.playing = playing;
   state.lastTime = null;
-  ui.play.textContent = playing ? "Pause" : ramp.isCompleteAt(state.elapsed) && state.automatic ? "Nochmal" : "Start";
+  ui.play.textContent = t(playing ? "play.pause" : ramp.isCompleteAt(state.elapsed) && state.automatic ? "play.again" : "play.start");
 }
 
 function describeMode() {
-  ui.mode.textContent = state.automatic
-    ? "Automatische Steigerung. Regler ziehen, um die Kraft selbst einzustellen."
-    : "Manuell. Zurücksetzen startet wieder die automatische Steigerung.";
+  ui.mode.textContent = t(state.automatic ? "mode.auto" : "mode.manual");
 }
 
 function reset() {
@@ -337,6 +342,19 @@ function fitCanvases() {
 window.addEventListener("resize", fitCanvases);
 if (document.fonts) document.fonts.ready.then(() => { fitCanvases(); renderAll(); });
 
+function setLanguage(next) {
+  lang = next;
+  t = translator(STRINGS, lang);
+  storeLanguage(storage, lang);
+  translatePage(document, t, lang);
+  describeMode();
+  ui.play.textContent = t(state.playing ? "play.pause" : ramp.isCompleteAt(state.elapsed) && state.automatic ? "play.again" : "play.start");
+  renderAll();
+  fitCanvases();
+}
+document.querySelectorAll("[data-lang]").forEach((b) => b.addEventListener("click", () => setLanguage(b.dataset.lang)));
+
+translatePage(document, t, lang);
 reset();
 fitCanvases();
 requestAnimationFrame(frame);

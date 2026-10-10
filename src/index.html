@@ -110,6 +110,11 @@
     flex: 1 1 auto;
   }
   .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license { font-size: 0.85rem; color: var(--ink-soft); margin: 0; }
+  .license a { color: inherit; }
   .about { max-width: 1680px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 32px; display: grid; gap: 14px; }
   .about > h2 { margin: 0; font-size: 1.1rem; }
   .lede { margin: 0; color: var(--ink-soft); max-width: 68ch; font-size: 1.05rem; }
@@ -250,95 +255,101 @@
 
 <div class="app">
   <header class="bar">
-    <h1>Desmosomen unter Zug</h1>
-    <a class="more" href="#about">Worum es geht ↓</a>
+    <h1 data-i18n="page.title">Desmosomen unter Zug</h1>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
   </header>
 
-  <section class="controls" aria-label="Steuerung">
+  <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
     <div class="buttons">
       <button type="button" class="primary" id="play">Start</button>
-      <button type="button" id="reset">Zurücksetzen</button>
+      <button type="button" id="reset" data-i18n="reset">Zurücksetzen</button>
     </div>
     <div class="force">
       <div class="force-label">
-        <label for="force">Zugkraft</label>
+        <label for="force" data-i18n="force">Zugkraft</label>
         <output id="force-value" for="force">0 %</output>
       </div>
       <input type="range" id="force" min="0" max="100" step="1" value="0">
       <span class="mode" id="mode">Automatische Steigerung. Regler ziehen, um die Kraft selbst einzustellen.</span>
     </div>
     <div class="options">
-      <label for="speed">Tempo
+      <label for="speed"><span data-i18n="speed">Tempo</span>
         <select id="speed">
-          <option value="0.5">0,5×</option>
+          <option value="0.5" data-i18n="speed.half">0,5×</option>
           <option value="1" selected>1×</option>
           <option value="2">2×</option>
         </select>
       </label>
-      <label for="stress"><input type="checkbox" id="stress" checked> Spannung einfärben</label>
-      <label for="labels"><input type="checkbox" id="labels" checked> Beschriftung</label>
+      <label for="stress"><input type="checkbox" id="stress" checked> <span data-i18n="stress">Spannung einfärben</span></label>
+      <label for="labels"><input type="checkbox" id="labels" checked> <span data-i18n="labels">Beschriftung</span></label>
     </div>
   </section>
 
-  <section class="panels" aria-label="Simulation">
+  <section class="panels" aria-label="Simulation" data-i18n-aria="panels.aria">
     <article class="panel">
       <div class="panel-head">
         <span class="panel-letter">A</span>
-        <h2>Desmosomen + Intermediärfilamente</h2>
+        <h2 data-i18n="a.title">Desmosomen + Intermediärfilamente</h2>
       </div>
-      <canvas id="canvas-a" aria-label="Epithelverband mit Desmosomen und Keratinfilamenten unter Zug"></canvas>
+      <canvas id="canvas-a" aria-label="Epithelverband mit Desmosomen und Keratinfilamenten unter Zug" data-i18n-aria="a.aria"></canvas>
       <div class="readout">
         <span class="chip" id="chip-a">intakt</span>
-        <span class="metric">Dehnung <b id="strain-a">0 %</b></span>
-        <span class="metric">Desmosomen gerissen <b id="desmo-a">0</b></span>
+        <span class="metric"><span data-i18n="readout.strain">Dehnung</span> <b id="strain-a">0 %</b></span>
+        <span class="metric"><span data-i18n="readout.torn">Desmosomen gerissen</span> <b id="desmo-a">0</b></span>
       </div>
     </article>
     <article class="panel">
       <div class="panel-head">
         <span class="panel-letter">B</span>
-        <h2>Nur Desmosomen, ohne Intermediärfilamente</h2>
+        <h2 data-i18n="b.title">Nur Desmosomen, ohne Intermediärfilamente</h2>
       </div>
-      <canvas id="canvas-b" aria-label="Epithelverband nur mit Desmosomen unter Zug"></canvas>
+      <canvas id="canvas-b" aria-label="Epithelverband nur mit Desmosomen unter Zug" data-i18n-aria="b.aria"></canvas>
       <div class="readout">
         <span class="chip" id="chip-b">intakt</span>
-        <span class="metric">Dehnung <b id="strain-b">0 %</b></span>
-        <span class="metric">Desmosomen gerissen <b id="desmo-b">0</b></span>
+        <span class="metric"><span data-i18n="readout.strain">Dehnung</span> <b id="strain-b">0 %</b></span>
+        <span class="metric"><span data-i18n="readout.torn">Desmosomen gerissen</span> <b id="desmo-b">0</b></span>
       </div>
     </article>
   </section>
 
-  <ul class="legend" aria-label="Legende">
-    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--membrane)" stroke-width="3" stroke-linecap="round"/></svg>Zellmembran mit Aktinkortex</li>
-    <li><svg width="30" height="16" aria-hidden="true"><rect x="7" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><rect x="19" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><line x1="11" y1="8" x2="19" y2="8" stroke="var(--desmosome)" stroke-width="1"/></svg>Desmosom (zwei Plaques)</li>
-    <li><svg width="30" height="12" aria-hidden="true"><path d="M2 6 Q5.25 2 8.5 6 T15 6 T21.5 6 T28 6" fill="none" stroke="var(--keratin)" stroke-width="2" stroke-linecap="round"/></svg>Intermediärfilament (Keratin), gewellt = entspannt</li>
-    <li><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="var(--nucleus)"/></svg>Zellkern</li>
-    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--stress)" stroke-width="4" stroke-linecap="round"/></svg>hohe Spannung</li>
-    <li><svg width="18" height="16" aria-hidden="true"><rect x="1" y="1" width="16" height="14" rx="3" fill="var(--cytoplasm-torn)" stroke="var(--torn)" stroke-dasharray="3 2"/></svg>gerissene Zelle (Zytolyse)</li>
+  <ul class="legend" aria-label="Legende" data-i18n-aria="legend.aria">
+    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--membrane)" stroke-width="3" stroke-linecap="round"/></svg><span data-i18n="legend.membrane">Zellmembran mit Aktinkortex</span></li>
+    <li><svg width="30" height="16" aria-hidden="true"><rect x="7" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><rect x="19" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><line x1="11" y1="8" x2="19" y2="8" stroke="var(--desmosome)" stroke-width="1"/></svg><span data-i18n="legend.desmosome">Desmosom (zwei Plaques)</span></li>
+    <li><svg width="30" height="12" aria-hidden="true"><path d="M2 6 Q5.25 2 8.5 6 T15 6 T21.5 6 T28 6" fill="none" stroke="var(--keratin)" stroke-width="2" stroke-linecap="round"/></svg><span data-i18n="legend.keratin">Intermediärfilament (Keratin), gewellt = entspannt</span></li>
+    <li><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="var(--nucleus)"/></svg><span data-i18n="legend.nucleus">Zellkern</span></li>
+    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--stress)" stroke-width="4" stroke-linecap="round"/></svg><span data-i18n="legend.stress">hohe Spannung</span></li>
+    <li><svg width="18" height="16" aria-hidden="true"><rect x="1" y="1" width="16" height="14" rx="3" fill="var(--cytoplasm-torn)" stroke="var(--torn)" stroke-dasharray="3 2"/></svg><span data-i18n="legend.lysis">gerissene Zelle (Zytolyse)</span></li>
   </ul>
 
-  <p class="banner" id="banner">Gleiche Kraft, andere Folgen: Das Desmosom hält nur so gut, wie es im Zytoskelett verankert ist.</p>
+  <p class="banner" id="banner" data-i18n="banner">Gleiche Kraft, andere Folgen: Das Desmosom hält nur so gut, wie es im Zytoskelett verankert ist.</p>
 
 </div>
 
 <section class="about" id="about">
-  <h2>Worum es geht</h2>
-  <p class="lede">Zwei Epithelverbände, dieselbe zunehmende Zugkraft. In A sind die Desmosomen an Intermediärfilamente (Keratin) gekoppelt, in B nicht. Links ist der Verband fixiert, rechts wird gezogen.</p>
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Zwei Epithelverbände, dieselbe zunehmende Zugkraft. In A sind die Desmosomen an Intermediärfilamente (Keratin) gekoppelt, in B nicht. Links ist der Verband fixiert, rechts wird gezogen.</p>
   <section class="explain">
     <div>
-      <h3>A: mit Intermediärfilamenten</h3>
-      <p>Die Keratinfilamente sind biegsam und liegen in Ruhe locker gewellt: Anfangs gibt der Verband fast so leicht nach wie B. Sobald sie gestreckt sind, sind sie sehr zugfest. Die Kraft läuft dann von Desmosom zu Desmosom durch das Keratinnetz jeder Zelle und verteilt sich auf den ganzen Verband. Er dehnt sich kaum weiter, keine Zelle reisst.</p>
+      <h3 data-i18n="explain.a.title">A: mit Intermediärfilamenten</h3>
+      <p data-i18n="explain.a.text">Die Keratinfilamente sind biegsam und liegen in Ruhe locker gewellt: Anfangs gibt der Verband fast so leicht nach wie B. Sobald sie gestreckt sind, sind sie sehr zugfest. Die Kraft läuft dann von Desmosom zu Desmosom durch das Keratinnetz jeder Zelle und verteilt sich auf den ganzen Verband. Er dehnt sich kaum weiter, keine Zelle reisst.</p>
     </div>
     <div>
-      <h3>B: nur Desmosomen</h3>
-      <p>Jedes Desmosom zieht an einem kleinen Stück Membran und Kortex. Die Zellen verformen sich stark, die Spannung sammelt sich an den Plaques, und dort reisst die Membran: Zytolyse. Die Desmosomen selbst halten.</p>
+      <h3 data-i18n="explain.b.title">B: nur Desmosomen</h3>
+      <p data-i18n="explain.b.text">Jedes Desmosom zieht an einem kleinen Stück Membran und Kortex. Die Zellen verformen sich stark, die Spannung sammelt sich an den Plaques, und dort reisst die Membran: Zytolyse. Die Desmosomen selbst halten.</p>
     </div>
     <div>
-      <h3>Klinischer Bezug</h3>
-      <p>Bei der Epidermolysis bullosa simplex (Mutationen in Keratin 5 oder 14) reissen basale Keratinozyten schon bei leichter mechanischer Belastung. Die Blase entsteht innerhalb der Zellen, nicht zwischen ihnen.</p>
+      <h3 data-i18n="explain.clinic.title">Klinischer Bezug</h3>
+      <p data-i18n="explain.clinic.text">Bei der Epidermolysis bullosa simplex (Mutationen in Keratin 5 oder 14) reissen basale Keratinozyten schon bei leichter mechanischer Belastung. Die Blase entsteht innerhalb der Zellen, nicht zwischen ihnen.</p>
     </div>
   </section>
 
-  <p class="note">Vereinfachtes Feder-Masse-Modell zur Veranschaulichung: Kräfte und Dehnungen sind qualitativ, nicht massstabsgetreu. Mikrotubuli, Adhärenskontakte und Basalmembran sind nicht dargestellt.</p>
+  <p class="note" data-i18n="note">Vereinfachtes Feder-Masse-Modell zur Veranschaulichung: Kräfte und Dehnungen sind qualitativ, nicht massstabsgetreu. Mikrotubuli, Adhärenskontakte und Basalmembran sind nicht dargestellt.</p>
+  <p class="license" data-i18n-html="license"></p>
 </section>
 
 <script>
