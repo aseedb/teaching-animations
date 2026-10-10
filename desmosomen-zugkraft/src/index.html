@@ -1,0 +1,357 @@
+<title>Desmosomen unter Zug</title>
+<meta name="description" content="Zwei Epithelverbände unter zunehmender Zugkraft: mit und ohne Intermediärfilamente an den Desmosomen.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f6f4f8;
+    --surface: #ffffff;
+    --ink: #221c2e;
+    --ink-soft: #5d5470;
+    --rule: #ddd6e6;
+    --stage: #fbfafc;
+    --cytoplasm: #efc3cf;
+    --cytoplasm-torn: #e6dde3;
+    --nucleus: #4a3b8f;
+    --membrane: #b0476a;
+    --desmosome: #241a33;
+    --keratin: #128a6c;
+    --stress: #e0662a;
+    --torn: #c2185b;
+    --clamp: #8f86a0;
+    --accent: #4a3b8f;
+    --accent-ink: #ffffff;
+    --ok: #127a5f;
+    --ok-bg: #dcf1e9;
+    --bad: #b3134f;
+    --bad-bg: #fbe0ea;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #15121b;
+      --surface: #1e1a26;
+      --ink: #eee9f5;
+      --ink-soft: #aaa0bb;
+      --rule: #342d40;
+      --stage: #0f0d14;
+      --cytoplasm: #6b3548;
+      --cytoplasm-torn: #3a3139;
+      --nucleus: #9d8ff0;
+      --membrane: #f07ca3;
+      --desmosome: #f3eefa;
+      --keratin: #3fe0ae;
+      --stress: #ff9a4d;
+      --torn: #ff5d93;
+      --clamp: #6c647b;
+      --accent: #a99cf5;
+      --accent-ink: #15121b;
+      --ok: #5fe0b4;
+      --ok-bg: #173a30;
+      --bad: #ff7aa6;
+      --bad-bg: #44172a;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #15121b;
+    --surface: #1e1a26;
+    --ink: #eee9f5;
+    --ink-soft: #aaa0bb;
+    --rule: #342d40;
+    --stage: #0f0d14;
+    --cytoplasm: #6b3548;
+    --cytoplasm-torn: #3a3139;
+    --nucleus: #9d8ff0;
+    --membrane: #f07ca3;
+    --desmosome: #f3eefa;
+    --keratin: #3fe0ae;
+    --stress: #ff9a4d;
+    --torn: #ff5d93;
+    --clamp: #6c647b;
+    --accent: #a99cf5;
+    --accent-ink: #15121b;
+    --ok: #5fe0b4;
+    --ok-bg: #173a30;
+    --bad: #ff7aa6;
+    --bad-bg: #44172a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  [hidden] { display: none !important; }
+  /* the app fills one screen: controls on top, A and B side by side (stacked on upright screens), key and message below */
+  .app {
+    max-width: 1680px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 10px 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .app > * { min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
+  h1 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.4vw, 2rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    flex: 1 1 auto;
+  }
+  .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license { font-size: 0.85rem; color: var(--ink-soft); margin: 0; }
+  .license a { color: inherit; }
+  .about { max-width: 1680px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 32px; display: grid; gap: 14px; }
+  .about > h2 { margin: 0; font-size: 1.1rem; }
+  .lede { margin: 0; color: var(--ink-soft); max-width: 68ch; font-size: 1.05rem; }
+
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+    gap: 16px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 14px;
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+  }
+  .panel-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .panel-letter {
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-radius: 4px;
+    padding: 1px 7px;
+  }
+  .panel h2 { margin: 0; font-size: 1.1rem; line-height: 1.25; flex: 1 1 14rem; }
+  canvas {
+    display: block;
+    aspect-ratio: 530 / 260;
+    width: 100%;
+    margin-inline: auto;
+    max-width: 100%;
+    background: var(--stage);
+    border-radius: 6px;
+  }
+  .readout { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; font-size: 0.95rem; }
+  .metric { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+  .metric b { color: var(--ink); font-weight: 500; }
+  .chip {
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 2px 10px;
+    background: var(--ok-bg);
+    color: var(--ok);
+  }
+  .chip[data-state="torn"] { background: var(--bad-bg); color: var(--bad); }
+
+  .controls {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 2;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: 0 6px 16px -12px rgb(34 28 46 / 0.35);
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+  }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button {
+    font: inherit;
+    line-height: 1.2;
+    font-weight: 700;
+    border-radius: 7px;
+    padding: 8px 16px;
+    border: 1px solid var(--rule);
+    background: var(--ground);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 7.5rem; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--stress); outline-offset: 2px; }
+  .force { display: grid; gap: 2px; flex: 1 1 260px; min-width: 0; }
+  .force-label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.95rem; }
+  .force-label output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .mode { font-size: 0.8rem; color: var(--ink-soft); }
+  @media (max-width: 1100px), (max-height: 760px) { .mode { display: none; } }
+  @media (max-width: 600px) {
+    .controls { gap: 8px 14px; padding: 8px 10px; }
+    button { padding: 6px 12px; }
+    button.primary { min-width: 6rem; }
+  }
+  .options { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 0.95rem; }
+  .options label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  select { font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+  .legend li { display: inline-flex; align-items: center; gap: 8px; }
+  .legend svg { flex: none; }
+
+  .explain {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+    gap: 16px 28px;
+  }
+  .explain h3 { margin: 0 0 4px; font-size: 1rem; }
+  .explain p { margin: 0; max-width: 62ch; }
+  .note { font-size: 0.85rem; color: var(--ink-soft); margin: 0; max-width: 90ch; }
+  .banner {
+    border-left: 4px solid var(--accent);
+    background: var(--surface);
+    padding: 10px 14px;
+    border-radius: 0 8px 8px 0;
+    font-weight: 700;
+    margin: 0;
+  }
+  /* screens big enough: everything in one screen, natural rows centred, A and B sized by the script to the height left */
+  @media (min-width: 640px) and (min-height: 420px) {
+    .app { min-height: 100vh; min-height: 100dvh; align-content: center; gap: 8px; }
+    .controls { position: static; box-shadow: none; padding: 6px 12px; gap: 6px 18px; }
+    .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+    .panel { padding: 8px 10px; gap: 6px; }
+    .panel h2 { font-size: 1rem; }
+    .legend { font-size: 0.82rem; gap: 4px 18px; }
+    .banner { padding: 6px 12px; }
+  }
+  @media (min-width: 640px) and (min-height: 420px) and (max-aspect-ratio: 1/1) {
+    .panels { grid-template-columns: minmax(0, 1fr); }
+  }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <h1 data-i18n="page.title">Desmosomen unter Zug</h1>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
+  </header>
+
+  <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
+    <div class="buttons">
+      <button type="button" class="primary" id="play">Start</button>
+      <button type="button" id="reset" data-i18n="reset">Zurücksetzen</button>
+    </div>
+    <div class="force">
+      <div class="force-label">
+        <label for="force" data-i18n="force">Zugkraft</label>
+        <output id="force-value" for="force">0 %</output>
+      </div>
+      <input type="range" id="force" min="0" max="100" step="1" value="0">
+      <span class="mode" id="mode">Automatische Steigerung. Regler ziehen, um die Kraft selbst einzustellen.</span>
+    </div>
+    <div class="options">
+      <label for="speed"><span data-i18n="speed">Tempo</span>
+        <select id="speed">
+          <option value="0.5" data-i18n="speed.half">0,5×</option>
+          <option value="1" selected>1×</option>
+          <option value="2">2×</option>
+        </select>
+      </label>
+      <label for="stress"><input type="checkbox" id="stress" checked> <span data-i18n="stress">Spannung einfärben</span></label>
+      <label for="labels"><input type="checkbox" id="labels" checked> <span data-i18n="labels">Beschriftung</span></label>
+    </div>
+  </section>
+
+  <section class="panels" aria-label="Simulation" data-i18n-aria="panels.aria">
+    <article class="panel">
+      <div class="panel-head">
+        <span class="panel-letter">A</span>
+        <h2 data-i18n="a.title">Desmosomen + Intermediärfilamente</h2>
+      </div>
+      <canvas id="canvas-a" aria-label="Epithelverband mit Desmosomen und Keratinfilamenten unter Zug" data-i18n-aria="a.aria"></canvas>
+      <div class="readout">
+        <span class="chip" id="chip-a">intakt</span>
+        <span class="metric"><span data-i18n="readout.strain">Dehnung</span> <b id="strain-a">0 %</b></span>
+        <span class="metric"><span data-i18n="readout.torn">Desmosomen gerissen</span> <b id="desmo-a">0</b></span>
+      </div>
+    </article>
+    <article class="panel">
+      <div class="panel-head">
+        <span class="panel-letter">B</span>
+        <h2 data-i18n="b.title">Nur Desmosomen, ohne Intermediärfilamente</h2>
+      </div>
+      <canvas id="canvas-b" aria-label="Epithelverband nur mit Desmosomen unter Zug" data-i18n-aria="b.aria"></canvas>
+      <div class="readout">
+        <span class="chip" id="chip-b">intakt</span>
+        <span class="metric"><span data-i18n="readout.strain">Dehnung</span> <b id="strain-b">0 %</b></span>
+        <span class="metric"><span data-i18n="readout.torn">Desmosomen gerissen</span> <b id="desmo-b">0</b></span>
+      </div>
+    </article>
+  </section>
+
+  <ul class="legend" aria-label="Legende" data-i18n-aria="legend.aria">
+    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--membrane)" stroke-width="3" stroke-linecap="round"/></svg><span data-i18n="legend.membrane">Zellmembran mit Aktinkortex</span></li>
+    <li><svg width="30" height="16" aria-hidden="true"><rect x="7" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><rect x="19" y="2" width="4" height="12" rx="1" fill="var(--desmosome)"/><line x1="11" y1="8" x2="19" y2="8" stroke="var(--desmosome)" stroke-width="1"/></svg><span data-i18n="legend.desmosome">Desmosom (zwei Plaques)</span></li>
+    <li><svg width="30" height="12" aria-hidden="true"><path d="M2 6 Q5.25 2 8.5 6 T15 6 T21.5 6 T28 6" fill="none" stroke="var(--keratin)" stroke-width="2" stroke-linecap="round"/></svg><span data-i18n="legend.keratin">Intermediärfilament (Keratin), gewellt = entspannt</span></li>
+    <li><svg width="16" height="16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="var(--nucleus)"/></svg><span data-i18n="legend.nucleus">Zellkern</span></li>
+    <li><svg width="30" height="12" aria-hidden="true"><line x1="2" y1="6" x2="28" y2="6" stroke="var(--stress)" stroke-width="4" stroke-linecap="round"/></svg><span data-i18n="legend.stress">hohe Spannung</span></li>
+    <li><svg width="18" height="16" aria-hidden="true"><rect x="1" y="1" width="16" height="14" rx="3" fill="var(--cytoplasm-torn)" stroke="var(--torn)" stroke-dasharray="3 2"/></svg><span data-i18n="legend.lysis">gerissene Zelle (Zytolyse)</span></li>
+  </ul>
+
+  <p class="banner" id="banner" data-i18n="banner">Gleiche Kraft, andere Folgen: Das Desmosom hält nur so gut, wie es im Zytoskelett verankert ist.</p>
+
+</div>
+
+<section class="about" id="about">
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Zwei Epithelverbände, dieselbe zunehmende Zugkraft. In A sind die Desmosomen an Intermediärfilamente (Keratin) gekoppelt, in B nicht. Links ist der Verband fixiert, rechts wird gezogen.</p>
+  <section class="explain">
+    <div>
+      <h3 data-i18n="explain.a.title">A: mit Intermediärfilamenten</h3>
+      <p data-i18n="explain.a.text">Die Keratinfilamente sind biegsam und liegen in Ruhe locker gewellt: Anfangs gibt der Verband fast so leicht nach wie B. Sobald sie gestreckt sind, sind sie sehr zugfest. Die Kraft läuft dann von Desmosom zu Desmosom durch das Keratinnetz jeder Zelle und verteilt sich auf den ganzen Verband. Er dehnt sich kaum weiter, keine Zelle reisst.</p>
+    </div>
+    <div>
+      <h3 data-i18n="explain.b.title">B: nur Desmosomen</h3>
+      <p data-i18n="explain.b.text">Jedes Desmosom zieht an einem kleinen Stück Membran und Kortex. Die Zellen verformen sich stark, die Spannung sammelt sich an den Plaques, und dort reisst die Membran: Zytolyse. Die Desmosomen selbst halten.</p>
+    </div>
+    <div>
+      <h3 data-i18n="explain.clinic.title">Klinischer Bezug</h3>
+      <p data-i18n="explain.clinic.text">Bei der Epidermolysis bullosa simplex (Mutationen in Keratin 5 oder 14) reissen basale Keratinozyten schon bei leichter mechanischer Belastung. Die Blase entsteht innerhalb der Zellen, nicht zwischen ihnen.</p>
+    </div>
+  </section>
+
+  <p class="note" data-i18n="note">Vereinfachtes Feder-Masse-Modell zur Veranschaulichung: Kräfte und Dehnungen sind qualitativ, nicht massstabsgetreu. Mikrotubuli, Adhärenskontakte und Basalmembran sind nicht dargestellt.</p>
+  <p class="license" data-i18n-html="license"></p>
+</section>
+
+<script>
+/* APP_SCRIPT */
+</script>

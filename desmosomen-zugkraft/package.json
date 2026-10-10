@@ -1,0 +1,9 @@
+{
+  "name": "desmosomen-zugkraft",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  }
+}
