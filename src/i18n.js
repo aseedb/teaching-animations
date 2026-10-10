@@ -70,3 +70,7 @@ export function storeLanguage(storage, lang) {
     // the choice then lasts for this visit only
   }
 }
+
+// numbers with a fixed count of decimals: a decimal comma in French, a point in German (Swiss usage)
+// and in English
+export const decimals = (lang) => (value, digits) => (lang === "fr" ? value.toFixed(digits).replace(".", ",") : value.toFixed(digits));
