@@ -92,10 +92,14 @@ function drawOverview(ctx, c, font, pad, w, top, height) {
     ctx.beginPath(); ctx.moveTo(X(Math.max(SEED_DIMERS, mean - Math.max(cap, 8))), y); ctx.lineTo(X(mean), y); ctx.stroke();
   }
   targets.plusEndOverview = { x: X(mean), y, r: height * 0.45, labelSide: "below" };
-  // the cell edge, on top of the microtubule so that it stays visible when the tip reaches it
+  // the cell edge: a continuous line on top of the microtubule, the outside of the cell shaded beyond it
+  ctx.fillStyle = c.rule;
+  ctx.globalAlpha = 0.45;
+  ctx.fillRect(x1, top, w - x1, height);
+  ctx.globalAlpha = 1;
   ctx.lineCap = "butt";
-  ctx.strokeStyle = c.edge; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
-  ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, top + height); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = c.edge; ctx.lineWidth = Math.max(3, font * 0.3);
+  ctx.beginPath(); ctx.moveTo(x1, top); ctx.lineTo(x1, top + height); ctx.stroke();
   ctx.fillStyle = c.ink;
   ctx.textAlign = "left";
   ctx.fillText("Zentrosom (Minus-Ende)", x0 - font * 1.6, top + font * 0.2);
@@ -359,6 +363,14 @@ window.film = {
   advance(steps) { scene.advance(steps); },
   draw() { draw(); return true; },
   phase() { return scene.microtubule().phase(); },
+  // for checking the tour: open step i, run it to its event, draw it
+  tourStep(i) {
+    tour = Tour.start(MT_TOUR, scene);
+    for (let k = 0; k < i; k++) tour.next();
+    for (let n = 0; n < 20000 && !tour.isWaiting(); n++) tour.tick();
+    draw();
+    return tour.step().title;
+  },
 };
 
 reset();
