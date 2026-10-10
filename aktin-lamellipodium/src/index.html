@@ -1,0 +1,204 @@
+<title>Aktin am Lamellipodium</title>
+<meta name="description" content="Wie die Polymerisation von Aktin die Membran einer kriechenden Zelle nach vorne schiebt: Arp2/3, Capping-Protein und Cofilin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* layout: one wide stage (16:9, also the film frame), controls above, explanation below */
+  :root {
+    --ground: #f4f5f7;
+    --surface: #ffffff;
+    --ink: #1d2230;
+    --ink-soft: #586075;
+    --rule: #d8dce5;
+    --cytoplasm: #fbfbfd;
+    --outside: #e8edf5;
+    --membrane: #2b5fa8;
+    --atp: #f2b51c;
+    --adppi: #e0722b;
+    --adp: #8c2f39;
+    --arp: #7a4fd0;
+    --capping: #1f8a8a;
+    --accent: #2b5fa8;
+    --accent-ink: #ffffff;
+    --note-bg: #eaf0f8;
+    --highlight: #111418;
+    --halo: #ffffff;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --ground: #12141a;
+      --surface: #1b1e26;
+      --ink: #eceef4;
+      --ink-soft: #a5acbd;
+      --rule: #2e3340;
+      --cytoplasm: #15181f;
+      --outside: #1f2734;
+      --membrane: #7aa8f0;
+      --atp: #ffd25a;
+      --adppi: #ff9a55;
+      --adp: #d0606c;
+      --arp: #b49bff;
+      --capping: #4fd1cf;
+      --accent: #7aa8f0;
+      --accent-ink: #0f1218;
+      --note-bg: #1e2a3a;
+      --highlight: #ffffff;
+      --halo: #0f1218;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground: #12141a;
+    --surface: #1b1e26;
+    --ink: #eceef4;
+    --ink-soft: #a5acbd;
+    --rule: #2e3340;
+    --cytoplasm: #15181f;
+    --outside: #1f2734;
+    --membrane: #7aa8f0;
+    --atp: #ffd25a;
+    --adppi: #ff9a55;
+    --adp: #d0606c;
+    --arp: #b49bff;
+    --capping: #4fd1cf;
+    --accent: #7aa8f0;
+    --accent-ink: #0f1218;
+    --note-bg: #1e2a3a;
+    --highlight: #ffffff;
+    --halo: #0f1218;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+  /* the app fills one screen: canvas and panel side by side on landscape screens, stacked on portrait ones */
+  .app { max-width: 1680px; margin: 0 auto; padding: 10px 16px 16px; display: grid; gap: 10px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "bar" "stage" "panel"; }
+  .bar { grid-area: bar; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; }
+  h1 { margin: 0; font-size: clamp(1.3rem, 2.4vw, 2rem); line-height: 1.15; text-wrap: balance; flex: 1 1 auto; }
+  .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .lang { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; align-self: center; }
+  .lang button { border: 0; border-radius: 0; padding: 4px 9px; font-size: 0.8rem; min-width: 0; background: var(--surface); color: var(--ink-soft); }
+  .lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .license a { color: inherit; }
+  .stage { grid-area: stage; min-width: 0; min-height: 0; display: flex; justify-content: center; align-items: flex-start; }
+  canvas { display: block; width: 100%; max-width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; outline: 1px solid var(--rule); background: var(--cytoplasm); }
+  .panel { grid-area: panel; min-width: 0; display: grid; gap: 10px; align-content: start; }
+  .rotate-hint { display: none; margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .controls { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 700; line-height: 1.2; border-radius: 7px; padding: 8px 14px; border: 1px solid var(--rule); background: var(--ground); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); min-width: 7rem; }
+  button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid var(--adppi); outline-offset: 2px; }
+  fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+  legend { font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0; margin-bottom: 2px; width: 100%; }
+  fieldset label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; font-size: 0.95rem; }
+  .speed { display: grid; gap: 2px; flex: 1 1 200px; min-width: 0; font-size: 0.9rem; }
+  .speed output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: 6px; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); }
+  .readout { display: flex; flex-wrap: wrap; gap: 4px 18px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.9rem; color: var(--ink-soft); }
+  .readout b { color: var(--ink); font-weight: 500; }
+  .legend { display: flex; flex-wrap: wrap; gap: 3px 16px; font-size: 0.88rem; color: var(--ink-soft); line-height: 1.35; }
+  .legend span::before { content: ""; display: inline-block; width: 16px; height: 6px; border-radius: 3px; margin-right: 6px; vertical-align: middle; background: var(--c); }
+  .legend span.tip::before { width: 9px; height: 9px; border-radius: 50%; margin-inline: 3px 9px; background: #ffffff; box-shadow: 0 0 0 1.5px var(--ink); }
+  .note { background: var(--note-bg); border-radius: 8px; padding: 10px 12px; }
+  .note h2 { margin: 0 0 2px; font-size: 1rem; }
+  .note p { margin: 0; max-width: 85ch; }
+  .tour { background: var(--surface); border: 2px solid var(--accent); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+  .tour-head { display: flex; align-items: baseline; gap: 4px 12px; flex-wrap: wrap; }
+  .tour h2 { margin: 0; font-size: 1.15rem; flex: 1 1 auto; }
+  .tour-progress, .tour-state { font-family: var(--font-mono); font-size: 0.85rem; color: var(--ink-soft); }
+  .tour p { margin: 0; max-width: 85ch; }
+  #tour-next.ready { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.tour-start { border-color: var(--accent); color: var(--accent); }
+  body.touring .controls, body.touring .note, body.touring #tour-start { display: none; }
+  .about { max-width: 1680px; margin: 0 auto; padding: 8px 16px 32px; display: grid; gap: 8px; }
+  .about h2 { margin: 0; font-size: 1.1rem; }
+  .lede { margin: 0; max-width: 85ch; }
+  footer { font-size: 0.85rem; color: var(--ink-soft); max-width: 95ch; }
+  footer p { margin: 0 0 4px; }
+  /* landscape screens: canvas left (fitted to the height by the script), panel right, no page scroll */
+  @media (min-aspect-ratio: 5/4) and (min-width: 640px) {
+    .app { height: 100vh; height: 100dvh; grid-template-columns: minmax(0, 1fr) clamp(272px, 26vw, 360px); grid-template-rows: auto minmax(0, 1fr); grid-template-areas: "bar bar" "stage panel"; }
+    .panel { overflow-y: auto; overscroll-behavior: contain; font-size: 0.95rem; }
+    .panel button { padding: 7px 11px; }
+    .panel button.primary { min-width: 5.5rem; }
+    .speed { flex-basis: 100%; }
+    .legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 10px; font-size: 0.82rem; }
+  }
+  /* phones held upright: a taller canvas leaves the lens room */
+  @media (orientation: portrait) and (max-width: 600px) { .rotate-hint { display: block; } button { padding: 6px 10px; } canvas { aspect-ratio: 4 / 3; } }
+  /* film mode: only the canvas, full frame */
+  body.film { background: var(--cytoplasm); }
+  body.film .app { display: block; max-width: none; padding: 0; height: auto; }
+  body.film .bar, body.film .panel, body.film .about { display: none; }
+  body.film canvas { width: 100vw; height: 56.25vw; border-radius: 0; outline: 0; }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <h1 data-i18n="page.title">Aktin am Lamellipodium</h1>
+    <button id="tour-start" class="tour-start" type="button" data-i18n="tour.start">Geführte Tour</button>
+    <div class="lang" role="group" aria-label="Sprache" data-i18n-aria="lang.group">
+      <button type="button" data-lang="de" aria-pressed="true">DE</button>
+      <button type="button" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="more" href="#about" data-i18n="bar.more">Worum es geht ↓</a>
+  </header>
+  <section class="stage" aria-label="Lamellipodium" data-i18n-aria="stage.aria">
+    <canvas id="stage" role="img" aria-label="Aktinnetz hinter der Plasmamembran an der Vorderkante der Zelle" data-i18n-aria="canvas.aria"></canvas>
+  </section>
+  <aside class="panel" aria-label="Steuerung und Erläuterung" data-i18n-aria="panel.aria">
+    <p class="rotate-hint" data-i18n="rotate.hint">Tipp: Gerät quer halten, dann wird die Animation grösser.</p>
+    <div class="tour" id="tour" hidden aria-live="polite">
+      <div class="tour-head"><h2 id="tour-title"></h2><span class="tour-state" id="tour-state"></span><span class="tour-progress" id="tour-progress"></span></div>
+      <p id="tour-text"></p>
+      <div class="buttons">
+        <button id="tour-back" type="button" data-i18n="tour.back">Zurück</button>
+        <button id="tour-next" type="button">Weiter</button>
+        <button id="tour-exit" type="button" data-i18n="tour.exit">Tour beenden</button>
+      </div>
+    </div>
+    <section class="controls" aria-label="Steuerung" data-i18n-aria="controls.aria">
+      <div class="buttons">
+        <button id="play" class="primary" type="button">Pause</button>
+        <button id="step" type="button" data-i18n="step">Einzelschritt</button>
+        <button id="reset" type="button" data-i18n="reset">Neu starten</button>
+      </div>
+      <label class="speed" for="speed"><span><span data-i18n="speed">Tempo</span> <output id="speed-out" for="speed"></output></span><input id="speed" type="range" min="0" max="7" step="1" value="6"></label>
+      <fieldset>
+        <legend data-i18n="proteins">Proteine</legend>
+        <label><input id="arp23" type="checkbox" checked> <span data-i18n="protein.arp23">Arp2/3 (Verzweigung)</span></label>
+        <label><input id="capping" type="checkbox" checked> <span data-i18n="protein.capping">Capping-Protein</span></label>
+        <label><input id="cofilin" type="checkbox" checked> <span data-i18n="protein.cofilin">Cofilin</span></label>
+      </fieldset>
+    </section>
+    <div class="legend">
+      <span data-i18n="legend.atp" style="--c: var(--atp)">ATP-Aktin</span>
+      <span data-i18n="legend.adppi" style="--c: var(--adppi)">ADP-Pi-Aktin</span>
+      <span data-i18n="legend.adp" style="--c: var(--adp)">ADP-Aktin</span>
+      <span data-i18n="legend.arp" style="--c: var(--arp)">Arp2/3 (Verzweigung)</span>
+      <span data-i18n="legend.capping" style="--c: var(--capping)">Capping-Protein</span>
+      <span data-i18n="legend.tip" class="tip">wachsendes Plus-Ende</span>
+      <span data-i18n="legend.membrane" style="--c: var(--membrane)">Plasmamembran</span>
+    </div>
+    <div class="readout" id="readout"></div>
+    <div class="note" aria-live="polite"><h2 id="note-title"></h2><p id="note-text"></p></div>
+  </aside>
+</div>
+<section class="about" id="about">
+  <h2 data-i18n="about.title">Worum es geht</h2>
+  <p class="lede" data-i18n="about.lede">Aufsicht auf die Vorderkante einer kriechenden Zelle. An den Plus-Enden lagert sich ATP-Aktin an und schiebt die Membran nach vorne. Hinten im Netz zerfallen die gealterten ADP-Filamente; die Monomere kehren in den Pool zurück und werden wieder vorne eingebaut.</p>
+  <footer>
+    <p data-i18n="about.scale">Schematisch und stark beschleunigt: die Reihenfolge der Ereignisse stimmt, ihre Geschwindigkeit nicht. In der Zelle wird ATP etwa 2 s nach dem Einbau hydrolysiert, Phosphat wird erst nach Minuten frei (Halbwertszeit etwa 350 s); Fischkeratozyten kriechen mit etwa 10 µm/min.</p>
+    <p data-i18n="about.values">Werte: Verzweigungswinkel 70° (Mullins et al. 1998), Untereinheit 2.7 nm, kritische Konzentration Plus-Ende 0.12 µM, Minus-Ende 0.6 µM (Pollard 1986), Pollard &amp; Borisy 2003.</p>
+    <p class="license" data-i18n-html="license"></p>
+  </footer>
+</section>
+<script>
+/* APP_SCRIPT */
+</script>
