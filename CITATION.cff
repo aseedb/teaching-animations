@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use these animations, please cite them as below."
+title: "Teaching animations: actin, microtubules, sarcomere and desmosomes"
+type: software
+authors:
+  - family-names: Zuber
+    given-names: Benoît
+    affiliation: "Institute of Anatomy, University of Bern"
+date-released: 2026-10-10
+repository-code: "https://github.com/aseedb/teaching-animations"
+url: "https://aseedb.github.io/teaching-animations/"
+license: MIT
+keywords:
+  - histology
+  - cell biology
+  - cytoskeleton
+  - teaching
+  - interactive animation

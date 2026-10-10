@@ -1,0 +1,7 @@
+# build output, recordings and rendered frames of each animation
+*/dist/
+*/frames/
+node_modules/
+.DS_Store
+# developed separately for now
+tem-optics/

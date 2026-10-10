@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Teaching animations</title>
+<meta name="description" content="Interactive animations for histology and cell biology teaching: actin at the lamellipodium, microtubule dynamic instability, sarcomere force-length, desmosomes under tension. German, French and English.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  :root {
+    --ground: #f4f5f7;
+    --surface: #ffffff;
+    --ink: #1d2128;
+    --ink-soft: #5a6270;
+    --rule: #d9dde4;
+    --accent: #2a5db0;
+    --actin: #e07a2e;
+    --tubulin: #2bb673;
+    --muscle: #c0392b;
+    --junction: #6a4fb3;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #12151a; --surface: #1b2028; --ink: #e9edf3; --ink-soft: #a3abb8; --rule: #2e3542; --accent: #8fb3ff;
+      --actin: #ff9f57; --tubulin: #5fe0a2; --muscle: #ff7a6b; --junction: #b49bff; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #12151a; --surface: #1b2028; --ink: #e9edf3; --ink-soft: #a3abb8; --rule: #2e3542; --accent: #8fb3ff;
+    --actin: #ff9f57; --tubulin: #5fe0a2; --muscle: #ff7a6b; --junction: #b49bff; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif; line-height: 1.5; }
+  main { max-width: 960px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 48px; display: grid; gap: 28px; }
+  header { display: grid; gap: 8px; }
+  h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; text-wrap: balance; }
+  .lede { margin: 0; color: var(--ink-soft); max-width: 62ch; }
+  .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .item { background: var(--surface); border: 1px solid var(--rule); border-left: 5px solid var(--c); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; }
+  .item h2 { margin: 0; font-size: 1.2rem; line-height: 1.25; }
+  .item h2 a { color: inherit; text-decoration: none; }
+  .item h2 a:hover { text-decoration: underline; }
+  .names { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .item p { margin: 0; }
+  .open { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.92rem; }
+  .open a { color: var(--accent); font-weight: 700; }
+  footer { font-size: 0.88rem; color: var(--ink-soft); display: grid; gap: 4px; }
+  footer p { margin: 0; }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Teaching animations</h1>
+    <p class="lede">Interactive animations for histology and cell biology, made at the Institute of Anatomy of the University of Bern. They run in any browser, on a laptop, a tablet or a phone, in German, French and English.</p>
+  </header>
+
+  <ul class="list">
+    <li class="item" style="--c: var(--actin)">
+      <h2><a href="aktin-lamellipodium/">Aktin am Lamellipodium</a></h2>
+      <p class="names">L'actine dans le lamellipode · Actin at the lamellipodium</p>
+      <p>Actin treadmilling at the leading edge of a crawling cell: ATP, ADP-Pi and ADP actin, Arp2/3 branches, capping protein, cofilin. Guided tour in nine steps.</p>
+      <p class="open"><a href="aktin-lamellipodium/#de">Deutsch</a><a href="aktin-lamellipodium/#fr">Français</a><a href="aktin-lamellipodium/#en">English</a></p>
+    </li>
+    <li class="item" style="--c: var(--tubulin)">
+      <h2><a href="mikrotubuli-instabilitaet/">Dynamische Instabilität</a></h2>
+      <p class="names">Instabilité dynamique · Dynamic instability</p>
+      <p>A microtubule grows and shrinks: GTP cap, catastrophe, rescue, the cell edge, and what the tubulin concentration changes. Guided tour in nine steps.</p>
+      <p class="open"><a href="mikrotubuli-instabilitaet/#de">Deutsch</a><a href="mikrotubuli-instabilitaet/#fr">Français</a><a href="mikrotubuli-instabilitaet/#en">English</a></p>
+    </li>
+    <li class="item" style="--c: var(--muscle)">
+      <h2><a href="sarkomer-kraft-laenge/">Sarkomer und Kraft</a></h2>
+      <p class="names">Sarcomère et force · Sarcomere and force</p>
+      <p>How the A band, I band and H zone change with sarcomere length, and why force depends on the overlap of actin and myosin. Rabbit and frog data, optional titin.</p>
+      <p class="open"><a href="sarkomer-kraft-laenge/#de">Deutsch</a><a href="sarkomer-kraft-laenge/#fr">Français</a><a href="sarkomer-kraft-laenge/#en">English</a></p>
+    </li>
+    <li class="item" style="--c: var(--junction)">
+      <h2><a href="desmosomen-zugkraft/">Desmosomen unter Zug</a></h2>
+      <p class="names">Desmosomes sous traction · Desmosomes under tension</p>
+      <p>Two epithelia under the same pulling force, with and without keratin filaments anchoring their desmosomes; a link to epidermolysis bullosa simplex.</p>
+      <p class="open"><a href="desmosomen-zugkraft/#de">Deutsch</a><a href="desmosomen-zugkraft/#fr">Français</a><a href="desmosomen-zugkraft/#en">English</a></p>
+    </li>
+  </ul>
+
+  <footer>
+    <p>© 2026 Benoît Zuber, Institute of Anatomy, University of Bern. Content (texts, graphics, films): <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Code: MIT licence.</p>
+    <p>Source code and how to cite: <a href="https://github.com/aseedb/teaching-animations">github.com/aseedb/teaching-animations</a></p>
+  </footer>
+</main>
+</body>
+</html>
