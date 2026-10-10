@@ -89,23 +89,29 @@
     font-size: 16px;
     line-height: 1.5;
   }
-  .page {
-    max-width: 1280px;
+  [hidden] { display: none !important; }
+  /* the app fills one screen: controls on top, A and B side by side (stacked on upright screens), key and message below */
+  .app {
+    max-width: 1680px;
     margin: 0 auto;
-    padding-inline: 20px;
-    padding-block: 20px 40px;
+    padding-inline: 16px;
+    padding-block: 10px 16px;
     display: grid;
-    gap: 16px;
+    gap: 10px;
   }
-  .page > * { min-width: 0; }
-  header { display: grid; gap: 6px; }
+  .app > * { min-width: 0; }
+  .bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; }
   h1 {
     margin: 0;
-    font-size: clamp(1.7rem, 3.2vw, 2.4rem);
-    line-height: 1.1;
+    font-size: clamp(1.3rem, 2.4vw, 2rem);
+    line-height: 1.15;
     letter-spacing: -0.01em;
     text-wrap: balance;
+    flex: 1 1 auto;
   }
+  .more { color: var(--ink-soft); font-size: 0.9rem; white-space: nowrap; }
+  .about { max-width: 1680px; margin: 0 auto; padding-inline: 16px; padding-block: 8px 32px; display: grid; gap: 14px; }
+  .about > h2 { margin: 0; font-size: 1.1rem; }
   .lede { margin: 0; color: var(--ink-soft); max-width: 68ch; font-size: 1.05rem; }
 
   .panels {
@@ -136,8 +142,7 @@
   canvas {
     display: block;
     aspect-ratio: 530 / 260;
-    width: min(100%, calc((100vh - 330px) * 530 / 260));
-    min-width: min(100%, 280px);
+    width: 100%;
     margin-inline: auto;
     max-width: 100%;
     background: var(--stage);
@@ -228,12 +233,25 @@
     font-weight: 700;
     margin: 0;
   }
+  /* screens big enough: everything in one screen, natural rows centred, A and B sized by the script to the height left */
+  @media (min-width: 640px) and (min-height: 420px) {
+    .app { min-height: 100vh; min-height: 100dvh; align-content: center; gap: 8px; }
+    .controls { position: static; box-shadow: none; padding: 6px 12px; gap: 6px 18px; }
+    .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+    .panel { padding: 8px 10px; gap: 6px; }
+    .panel h2 { font-size: 1rem; }
+    .legend { font-size: 0.82rem; gap: 4px 18px; }
+    .banner { padding: 6px 12px; }
+  }
+  @media (min-width: 640px) and (min-height: 420px) and (max-aspect-ratio: 1/1) {
+    .panels { grid-template-columns: minmax(0, 1fr); }
+  }
 </style>
 
-<div class="page">
-  <header>
+<div class="app">
+  <header class="bar">
     <h1>Desmosomen unter Zug</h1>
-    <p class="lede">Zwei Epithelverbände, dieselbe zunehmende Zugkraft. In A sind die Desmosomen an Intermediärfilamente (Keratin) gekoppelt, in B nicht. Links ist der Verband fixiert, rechts wird gezogen.</p>
+    <a class="more" href="#about">Worum es geht ↓</a>
   </header>
 
   <section class="controls" aria-label="Steuerung">
@@ -300,6 +318,11 @@
 
   <p class="banner" id="banner">Gleiche Kraft, andere Folgen: Das Desmosom hält nur so gut, wie es im Zytoskelett verankert ist.</p>
 
+</div>
+
+<section class="about" id="about">
+  <h2>Worum es geht</h2>
+  <p class="lede">Zwei Epithelverbände, dieselbe zunehmende Zugkraft. In A sind die Desmosomen an Intermediärfilamente (Keratin) gekoppelt, in B nicht. Links ist der Verband fixiert, rechts wird gezogen.</p>
   <section class="explain">
     <div>
       <h3>A: mit Intermediärfilamenten</h3>
@@ -316,7 +339,7 @@
   </section>
 
   <p class="note">Vereinfachtes Feder-Masse-Modell zur Veranschaulichung: Kräfte und Dehnungen sind qualitativ, nicht massstabsgetreu. Mikrotubuli, Adhärenskontakte und Basalmembran sind nicht dargestellt.</p>
-</div>
+</section>
 
 <script>
 /* APP_SCRIPT */

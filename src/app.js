@@ -308,7 +308,35 @@ function onThemeChange() {
 }
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onThemeChange);
 new MutationObserver(onThemeChange).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-if (document.fonts) document.fonts.ready.then(renderAll);
+// screens big enough to show everything at once: A and B as large as the height left by the other rows
+// allows, keeping their proportions; smaller screens: full width, the page scrolls
+const FITTED = "(min-width: 640px) and (min-height: 420px)";
+const ASPECT = 530 / 260;
+function fitCanvases() {
+  const canvases = ["canvas-a", "canvas-b"].map((id) => document.getElementById(id));
+  if (!matchMedia(FITTED).matches) { canvases.forEach((c) => { c.style.width = ""; c.style.height = ""; }); return; }
+  const app = document.querySelector(".app");
+  const style = getComputedStyle(app);
+  const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+  const gaps = (app.children.length - 1) * parseFloat(style.rowGap);
+  const others = [...app.children].filter((el) => !el.classList.contains("panels")).reduce((sum, el) => sum + el.offsetHeight, 0);
+  const panels = canvases.map((c) => c.parentElement);
+  const stacked = panels[1].offsetTop > panels[0].offsetTop + 10;
+  const extras = panels.map((p, i) => p.offsetHeight - canvases[i].offsetHeight);
+  const panelGap = parseFloat(getComputedStyle(document.querySelector(".panels")).rowGap);
+  const left = window.innerHeight - padding - gaps - others;
+  const height = stacked ? (left - extras[0] - extras[1] - panelGap) / 2 : left - Math.max(...extras);
+  canvases.forEach((c, i) => {
+    const ps = getComputedStyle(panels[i]);
+    const room = panels[i].clientWidth - parseFloat(ps.paddingLeft) - parseFloat(ps.paddingRight);
+    const width = Math.floor(Math.max(240, Math.min(room, height * ASPECT)));
+    c.style.width = `${width}px`;
+    c.style.height = `${Math.floor(width / ASPECT)}px`;
+  });
+}
+window.addEventListener("resize", fitCanvases);
+if (document.fonts) document.fonts.ready.then(() => { fitCanvases(); renderAll(); });
 
 reset();
+fitCanvases();
 requestAnimationFrame(frame);
